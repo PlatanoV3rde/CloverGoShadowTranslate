@@ -40,7 +40,7 @@ public class SpawnShadowPokemon {
                 if(Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawn", shadow.getTranslatedName());
                 }
-                else msg = new StringTextComponent("Un Pokémon Oscuro" + shadow.getTranslatedName().getString() + " ha spawneado cerca de ti!");
+                else msg = new StringTextComponent("Un Pokémon Oscuro " + shadow.getTranslatedName().getString() + " ha spawneado cerca de ti!");
                 msg.setStyle(msg.getStyle().applyFormat(TextFormatting.GREEN));
                 player.sendMessage(msg, Util.NIL_UUID);
             }
