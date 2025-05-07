@@ -23,8 +23,8 @@ public class SendOutPokemon {
             RegistryValue<RibbonType> reg = ribbon.getType();
             if(!reg.getValue().isPresent()) return;
             RibbonType equipped = reg.getValueUnsafe();
-            if(equipped.equals(shadow)) ribbon.getRibbonData().setPrefix(new StringTextComponent("Shadow "));
-            if(equipped.equals(purified)) ribbon.getRibbonData().setPrefix(new StringTextComponent("Purified "));
+            if(equipped.equals(shadow)) ribbon.getRibbonData().setPrefix(new StringTextComponent("Oscuro "));
+            if(equipped.equals(purified)) ribbon.getRibbonData().setPrefix(new StringTextComponent("Purificado "));
         }
     }
 }
