@@ -18,7 +18,7 @@ public class BattleStartListener {
         for(BattleParticipant bp: event.getTeamOne()) {
             for(PixelmonWrapper pw: bp.getTeamPokemon()) {
                 if(pw == null) continue;
-                if(pw.pokemon.getFormattedNickname().getString().contains("Shadow") && bp instanceof TrainerParticipant) {
+                if(pw.pokemon.getFormattedNickname().getString().contains("Oscuro") && bp instanceof TrainerParticipant) {
                     pw.pokemon.addRibbon(ribbonType);
                 }
                 if(RibbonHelper.hasRibbon(pw.pokemon, ribbonType)) {
@@ -29,7 +29,7 @@ public class BattleStartListener {
         for(BattleParticipant bp: event.getTeamTwo()) {
             for(PixelmonWrapper pw: bp.getTeamPokemon()) {
                 if(pw == null) continue;
-                if(pw.pokemon.getFormattedNickname().getString().contains("Shadow") && bp instanceof TrainerParticipant) {
+                if(pw.pokemon.getFormattedNickname().getString().contains("Oscuro") && bp instanceof TrainerParticipant) {
                     pw.pokemon.addRibbon(ribbonType);
                 }
                 if(RibbonHelper.hasRibbon(pw.pokemon, ribbonType)) {
