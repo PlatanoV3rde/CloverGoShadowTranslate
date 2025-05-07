@@ -54,8 +54,8 @@ public class SpawnShadowPokemon {
                 team.forEach(pkm -> pkm.setNickname(new StringTextComponent("Shadow " + pkm.getTranslatedName().getString())));
                 IFormattableTextComponent msg;
                 if(Config.CONFIG.isUseTranslatables()) msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
-                else msg = new StringTextComponent("A suspicious looking trainer spawned at " + event.action.spawnLocation.location.pos.getX() + ", " + event.action.spawnLocation.location.pos.getY() + ", " + event.action.spawnLocation.location.pos.getZ() + "!");
-                msg.setStyle(msg.getStyle().applyFormat(TextFormatting.LIGHT_PURPLE));
+                else msg = new StringTextComponent("Un entrenador de aspecto sospechoso apareció en " + event.action.spawnLocation.location.pos.getX() + ", " + event.action.spawnLocation.location.pos.getY() + ", " + event.action.spawnLocation.location.pos.getZ() + "!");
+                msg.setStyle(msg.getStyle().applyFormat(TextFormatting.RED));
                 if(event.action.spawnLocation.cause instanceof ServerPlayerEntity) {
                     ServerPlayerEntity player = (ServerPlayerEntity) event.action.spawnLocation.cause;
                     player.sendMessage(msg, Util.NIL_UUID);
