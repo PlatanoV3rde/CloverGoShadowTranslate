@@ -20,7 +20,7 @@ public class RibbonEquipped {
         RegistryValue<RibbonType> reg = event.getRibbon().getType();
         if(!reg.getValue().isPresent()) return;
         RibbonType equipped = reg.getValueUnsafe();
-        if(equipped.equals(shadow)) event.getRibbon().getRibbonData().setPrefix(new StringTextComponent("Shadow "));
-        if(equipped.equals(purified)) event.getRibbon().getRibbonData().setPrefix(new StringTextComponent("Purified "));
+        if(equipped.equals(shadow)) event.getRibbon().getRibbonData().setPrefix(new StringTextComponent("Oscuro "));
+        if(equipped.equals(purified)) event.getRibbon().getRibbonData().setPrefix(new StringTextComponent("Purificado "));
     }
 }
