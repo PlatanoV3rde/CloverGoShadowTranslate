@@ -1,0 +1,33 @@
+name: Compilar CloverGoShadow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v3
+
+      - name: Instalar Java 8
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 8
+
+      - name: Dar permisos al gradlew
+        run: chmod +x ./gradlew
+
+      - name: Compilar el mod
+        run: ./gradlew build
+
+      - name: Subir el .jar generado
+        uses: actions/upload-artifact@v3
+        with:
+          name: CloverGoShadow-Mod
+          path: build/libs/*.jar
