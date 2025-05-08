@@ -43,7 +43,7 @@ public class ExpHelper {
         if(Config.CONFIG.isUseTranslatables()) {
             msg = new TranslationTextComponent("clovergoshadow.expgain", amount);
         }
-        else msg = new StringTextComponent("Your research level has gained " + amount + " exp!");
+        else msg = new StringTextComponent("Su nivel de investigación ha aumentado " + amount + " exp!");
         player.sendMessage(msg, Util.NIL_UUID);
         while(plExp.getScore() > required) {
             plExp.setScore(plExp.getScore() - required);
@@ -70,7 +70,7 @@ public class ExpHelper {
             if(Config.CONFIG.isUseTranslatables()) {
                 levelMsg = new TranslationTextComponent("clovergoshadow.levelgain", plLevel.getScore());
             }
-            else levelMsg = new StringTextComponent("Your research level has levelled up to " + plLevel.getScore() + "!");
+            else levelMsg = new StringTextComponent("Tu nivel de investigación ha subido a " + plLevel.getScore() + "!");
             player.sendMessage(levelMsg, Util.NIL_UUID);
         }
     }
@@ -116,7 +116,7 @@ public class ExpHelper {
         if(Config.CONFIG.isUseTranslatables()) {
             msg = new TranslationTextComponent("clovergoshadow.levelgain", amount);
         }
-        else msg = new StringTextComponent("Your research level has levelled up by " + amount + "!");
+        else msg = new StringTextComponent("Su nivel de investigación ha aumentado en " + amount + "!");
         player.sendMessage(msg, Util.NIL_UUID);
     }
 
@@ -143,7 +143,7 @@ public class ExpHelper {
         IFormattableTextComponent msg;
         if (Config.CONFIG.isUseTranslatables()) {
             msg = new TranslationTextComponent("clovergoshadow.expset", amount);
-        } else msg = new StringTextComponent("Your exp has been set to " + amount + "!");
+        } else msg = new StringTextComponent("Su exp se ha fijado en " + amount + "!");
         player.sendMessage(msg, Util.NIL_UUID);
     }
     public static void setLevelForPlayer(ServerPlayerEntity player, int amount) {
@@ -172,7 +172,7 @@ public class ExpHelper {
         if(Config.CONFIG.isUseTranslatables()) {
             msg = new TranslationTextComponent("clovergoshadow.levelset", amount);
         }
-        else msg = new StringTextComponent("Your level has been set to " + amount + "!");
+        else msg = new StringTextComponent("Su nivel se ha fijado en " + amount + "!");
         player.sendMessage(msg, Util.NIL_UUID);
     }
 }
