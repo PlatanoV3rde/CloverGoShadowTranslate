@@ -115,7 +115,7 @@ public class GiveShadow {
             // Receiver message
             IFormattableTextComponent successMsgR = new StringTextComponent("¡Has recibido un ")
                     .append(pokemonNameComponent)
-                    .append(" Sombrío!");
+                    .append(" Oscuro!");
             successMsgR.setStyle(successMsgR.getStyle().applyFormat(TextFormatting.GREEN));
             
             // Giver message
@@ -123,7 +123,7 @@ public class GiveShadow {
                     .append(receiverNameComponent)
                     .append(" un ")
                     .append(pokemonNameComponent)
-                    .append(" Sombrío!");
+                    .append(" Oscuro!");
             successMsgG.setStyle(successMsgG.getStyle().applyFormat(TextFormatting.GREEN));
             
             receiver.sendMessage(successMsgR, Util.NIL_UUID);
