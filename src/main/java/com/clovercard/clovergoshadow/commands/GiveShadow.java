@@ -64,7 +64,7 @@ public class GiveShadow {
         
         RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         if(ribbon == null) {
-            sendErrorMessage(player, "clovergoshadow.giveshadow.error4", "¡No se encontró la cinta de tipo Oscuro! ¿Fue eliminada?");
+            sendErrorMessage(player, "clovergoshadow.giveshadow.error4", "¡No se encontró la cinta de tipo Sombrío! ¿Fue eliminada?");
             return 1;
         }
         
@@ -85,11 +85,13 @@ public class GiveShadow {
     }
 
     private void sendSuccessMessages(ServerPlayerEntity player, ServerPlayerEntity receiver, Pokemon pokemon) {
-        IFormattableTextComponent pokemonNameComponent = new StringTextComponent(
-                Config.CONFIG.isUseTranslatables() 
-                        ? pokemon.getSpecies().getTranslatedName() 
-                        : pokemon.getSpecies().getName()
-        ).setStyle(Style.EMPTY.applyFormat(TextFormatting.YELLOW));
+        // Get Pokémon name as string based on config
+        String pokemonNameStr = Config.CONFIG.isUseTranslatables()
+                ? pokemon.getSpecies().getTranslatedName().getString()
+                : pokemon.getSpecies().getName();
+        
+        IFormattableTextComponent pokemonNameComponent = new StringTextComponent(pokemonNameStr)
+                .setStyle(Style.EMPTY.applyFormat(TextFormatting.YELLOW));
         
         IFormattableTextComponent receiverNameComponent = new StringTextComponent(receiver.getName().getString())
                 .setStyle(Style.EMPTY.applyFormat(TextFormatting.AQUA));
@@ -113,7 +115,7 @@ public class GiveShadow {
             // Receiver message
             IFormattableTextComponent successMsgR = new StringTextComponent("¡Has recibido un ")
                     .append(pokemonNameComponent)
-                    .append(" Oscuro!");
+                    .append(" Sombrío!");
             successMsgR.setStyle(successMsgR.getStyle().applyFormat(TextFormatting.GREEN));
             
             // Giver message
@@ -121,7 +123,7 @@ public class GiveShadow {
                     .append(receiverNameComponent)
                     .append(" un ")
                     .append(pokemonNameComponent)
-                    .append(" Oscuro!");
+                    .append(" Sombrío!");
             successMsgG.setStyle(successMsgG.getStyle().applyFormat(TextFormatting.GREEN));
             
             receiver.sendMessage(successMsgR, Util.NIL_UUID);
