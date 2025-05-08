@@ -39,12 +39,18 @@ public class SpawnShadowPokemon {
                 IFormattableTextComponent msg;
                 if(Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawn", shadow.getTranslatedName());
+                } else {
+                    IFormattableTextComponent pokemonName = new StringTextComponent(shadow.getTranslatedName().getString())
+                        .mergeStyle(TextFormatting.DARK_PURPLE);
+                    msg = new StringTextComponent("¡Un Pokémon Oscuro ")
+                        .mergeStyle(TextFormatting.GREEN)
+                        .append(pokemonName)
+                        .append(" ha spawneado cerca de ti!");
                 }
-                else msg = new StringTextComponent("Un Pokémon Oscuro " + shadow.getTranslatedName().getString() + " ha spawneado cerca de ti!");
-                msg.setStyle(msg.getStyle().applyFormat(TextFormatting.GREEN));
                 player.sendMessage(msg, Util.NIL_UUID);
             }
         }
+
         if(event.action instanceof SpawnActionNPCTrainer) {
             SpawnActionNPCTrainer action = (SpawnActionNPCTrainer) event.action;
             if(Math.random() < Config.CONFIG.getShadowTrainerPercent()/100) {
@@ -53,9 +59,15 @@ public class SpawnShadowPokemon {
                 ArrayList<Pokemon> team = (ArrayList<Pokemon>) trainer.getPokemonStorage().getTeam();
                 team.forEach(pkm -> pkm.setNickname(new StringTextComponent("Shadow " + pkm.getTranslatedName().getString())));
                 IFormattableTextComponent msg;
-                if(Config.CONFIG.isUseTranslatables()) msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
-                else msg = new StringTextComponent("Un entrenador de aspecto sospechoso apareció en " + event.action.spawnLocation.location.pos.getX() + ", " + event.action.spawnLocation.location.pos.getY() + ", " + event.action.spawnLocation.location.pos.getZ() + "!");
-                msg.setStyle(msg.getStyle().applyFormat(TextFormatting.RED));
+                if(Config.CONFIG.isUseTranslatables()) {
+                    msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
+                } else {
+                    msg = new StringTextComponent("Un entrenador de aspecto sospechoso apareció en " + 
+                        event.action.spawnLocation.location.pos.getX() + ", " + 
+                        event.action.spawnLocation.location.pos.getY() + ", " + 
+                        event.action.spawnLocation.location.pos.getZ() + "!")
+                        .mergeStyle(TextFormatting.RED);
+                }
                 if(event.action.spawnLocation.cause instanceof ServerPlayerEntity) {
                     ServerPlayerEntity player = (ServerPlayerEntity) event.action.spawnLocation.cause;
                     player.sendMessage(msg, Util.NIL_UUID);
