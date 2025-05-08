@@ -56,10 +56,10 @@ public class Purify {
             successMsg = new TranslationTextComponent("clovergoshadow.purify.success");
         }
         else {
-            errorMsg = new StringTextComponent("Could not find the ribbons and/or pokemon needed for this command!");
-            errorMsg2 = new StringTextComponent("This Pokemon is not a Shadow Pokemon, so it cannot be purified!");
-            errorMsg3 = new StringTextComponent("Your pokemon needs to be level 50 to purify!");
-            successMsg = new StringTextComponent("Your pokemon has been purified!");
+            errorMsg = new StringTextComponent("¡No se pudieron encontrar las cintas y/o el Pokémon necesarios para este comando!");
+            errorMsg2 = new StringTextComponent("¡Este Pokémon no es un Pokémon Oscuro, por lo que no puede ser purificado!");
+            errorMsg3 = new StringTextComponent("¡Tu Pokémon necesita ser nivel 50 para purificarse!");
+            successMsg = new StringTextComponent("¡Tu Pokémon ha sido purificado!");
         }
 
         errorMsg.setStyle(errorMsg.getStyle().applyFormat(TextFormatting.RED));
@@ -118,16 +118,17 @@ public class Purify {
             successMsg = new TranslationTextComponent("clovergoshadow.purify.success");
         }
         else {
-            errorMsg = new StringTextComponent("Could not find the ribbons and/or pokemon needed for this command!");
-            errorMsg2 = new StringTextComponent("This Pokemon is not a Shadow Pokemon, so it cannot be purified!");
-            errorMsg3 = new StringTextComponent("Your pokemon needs to be level 50 to purify.");
-            errorMsg4 = new StringTextComponent("Cannot find the player whose name you provided.");
-            successMsg = new StringTextComponent("Your pokemon has been purified!");
+            errorMsg = new StringTextComponent("¡No se pudieron encontrar las cintas y/o el Pokémon necesarios para este comando!");
+            errorMsg2 = new StringTextComponent("¡Este Pokémon no es un Pokémon Oscuro, por lo que no puede ser purificado!");
+            errorMsg3 = new StringTextComponent("¡Tu Pokémon necesita ser nivel 50 para purificarse!");
+            errorMsg4 = new StringTextComponent("No se puede encontrar al jugador con el nombre proporcionado.");
+            successMsg = new StringTextComponent("¡Tu Pokémon ha sido purificado!");
         }
 
         errorMsg.setStyle(errorMsg.getStyle().applyFormat(TextFormatting.RED));
         errorMsg2.setStyle(errorMsg2.getStyle().applyFormat(TextFormatting.RED));
         errorMsg3.setStyle(errorMsg3.getStyle().applyFormat(TextFormatting.RED));
+        errorMsg4.setStyle(errorMsg4.getStyle().applyFormat(TextFormatting.RED));
         successMsg.setStyle(successMsg.getStyle().applyFormat(TextFormatting.GREEN));
 
         ServerPlayerEntity player = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByName(target);
