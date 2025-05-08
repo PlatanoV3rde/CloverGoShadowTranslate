@@ -34,16 +34,20 @@ public class GiveShadow {
                         )
         );
     }
+
     public int giveShadow(CommandSource src, String target, String specs) {
         if(!(src.getEntity() instanceof ServerPlayerEntity)) return 1;
+        
         IFormattableTextComponent errorMsg;
         IFormattableTextComponent errorMsg2;
         IFormattableTextComponent errorMsg3;
         IFormattableTextComponent errorMsg4;
         IFormattableTextComponent successMsgR;
         IFormattableTextComponent successMsgG;
+        
         ServerPlayerEntity player = (ServerPlayerEntity) src.getEntity();
         ServerPlayerEntity receiver = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByName(target);
+        
         if(receiver == null) {
             if(Config.CONFIG.isUseTranslatables()) {
                 errorMsg = new TranslationTextComponent("clovergoshadow.giveshadow.error1");
@@ -51,12 +55,13 @@ public class GiveShadow {
                 player.sendMessage(errorMsg, Util.NIL_UUID);
             }
             else {
-                errorMsg = new StringTextComponent("Unable to find the player provided!");
+                errorMsg = new StringTextComponent("¡No se pudo encontrar al jugador especificado!");
                 errorMsg.setStyle(errorMsg.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg, Util.NIL_UUID);
             }
             return 1;
         }
+        
         PokemonSpecification spec = PokemonSpecificationProxy.create(specs);
         if(spec == null) {
             if(Config.CONFIG.isUseTranslatables()) {
@@ -65,12 +70,13 @@ public class GiveShadow {
                 player.sendMessage(errorMsg2, Util.NIL_UUID);
             }
             else {
-                errorMsg2 = new StringTextComponent("Unable to create specs.");
+                errorMsg2 = new StringTextComponent("No se pudieron crear las especificaciones del Pokémon.");
                 errorMsg2.setStyle(errorMsg2.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg2, Util.NIL_UUID);
             }
             return 1;
         }
+        
         Pokemon pokemon = PokemonFactory.create(spec);
         if(pokemon == null) {
             if(Config.CONFIG.isUseTranslatables()) {
@@ -79,12 +85,13 @@ public class GiveShadow {
                 player.sendMessage(errorMsg3, Util.NIL_UUID);
             }
             else {
-                errorMsg3 = new StringTextComponent("Unable to find the pokemon specified.");
+                errorMsg3 = new StringTextComponent("No se pudo encontrar el Pokémon especificado.");
                 errorMsg3.setStyle(errorMsg3.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg3, Util.NIL_UUID);
             }
             return 1;
         }
+        
         RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         if(ribbon == null) {
             if(Config.CONFIG.isUseTranslatables()) {
@@ -93,14 +100,16 @@ public class GiveShadow {
                 player.sendMessage(errorMsg4, Util.NIL_UUID);
             }
             else {
-                errorMsg4 = new StringTextComponent("Unable to find the Shadow Type ribbon! Was it removed?");
+                errorMsg4 = new StringTextComponent("¡No se encontró la cinta de tipo Sombrío! ¿Fue eliminada?");
                 errorMsg4.setStyle(errorMsg4.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg4, Util.NIL_UUID);
             }
             return 1;
         }
+        
         pokemon.addRibbon(ribbon);
         StorageProxy.getParty(receiver).add(pokemon);
+        
         if(Config.CONFIG.isUseTranslatables()) {
             successMsgR = new TranslationTextComponent("clovergoshadow.giveshadow.successreceiver", pokemon.getSpecies().getTranslatedName());
             successMsgG = new TranslationTextComponent("clovergoshadow.giveshadow.successgiver", receiver.getName().getString(), pokemon.getSpecies().getTranslatedName());
@@ -110,13 +119,14 @@ public class GiveShadow {
             player.sendMessage(successMsgG, Util.NIL_UUID);
         }
         else {
-            successMsgR = new StringTextComponent("You received a shadow " + pokemon.getSpecies().getName() + "!");
-            successMsgG = new StringTextComponent("You sent " + receiver.getName().getString() + " a shadow " + pokemon.getSpecies().getName() + "!");
+            successMsgR = new StringTextComponent("¡Has recibido un " + pokemon.getSpecies().getName() + " Sombrío!");
+            successMsgG = new StringTextComponent("¡Le enviaste a " + receiver.getName().getString() + " un " + pokemon.getSpecies().getName() + " Sombrío!");
             successMsgR.setStyle(successMsgR.getStyle().applyFormat(TextFormatting.GREEN));
             successMsgG.setStyle(successMsgG.getStyle().applyFormat(TextFormatting.GREEN));
             receiver.sendMessage(successMsgR, Util.NIL_UUID);
             player.sendMessage(successMsgG, Util.NIL_UUID);
         }
+        
         return 0;
     }
 }
