@@ -64,7 +64,7 @@ public class GiveShadow {
         
         RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         if(ribbon == null) {
-            sendErrorMessage(player, "clovergoshadow.giveshadow.error4", "¡No se encontró la cinta de tipo Sombrío! ¿Fue eliminada?");
+            sendErrorMessage(player, "clovergoshadow.giveshadow.error4", "¡No se encontró la cinta de tipo Oscuro! ¿Fue eliminada?");
             return 1;
         }
         
