@@ -41,7 +41,7 @@ public class ItemHelper {
         IFormattableTextComponent itemName;
         if(Config.CONFIG.isUseTranslatables()) itemName = new TranslationTextComponent("clovergoshadow.spawner", formName, rand.getName());
         else {
-            itemName = new StringTextComponent("Shadow " + formName + " " + rand.getName() + " Wishing Piece");
+            itemName = new StringTextComponent("Oscuro " + formName + " " + rand.getName() + " Pieza Deseo");
         }
         itemStack.setHoverName(itemName);
         itemStack.getOrCreateTag().putBoolean("clovergoshadowwishingpiece", true);
