@@ -29,14 +29,18 @@ public class SpawnShadow {
                         )
         );
     }
+    
     public int spawnShadowPokemon(CommandSource src, String specs) {
         if(!(src.getEntity() instanceof ServerPlayerEntity)) return 1;
+        
         IFormattableTextComponent errorMsg;
         IFormattableTextComponent errorMsg2;
         IFormattableTextComponent errorMsg3;
         IFormattableTextComponent successMsg;
+        
         ServerPlayerEntity player = (ServerPlayerEntity) src.getEntity();
         PokemonSpecification spec = PokemonSpecificationProxy.create(specs);
+        
         if(spec == null) {
             if(Config.CONFIG.isUseTranslatables()) {
                 errorMsg = new TranslationTextComponent("clovergoshadow.spawnshadow.error1");
@@ -44,12 +48,13 @@ public class SpawnShadow {
                 player.sendMessage(errorMsg, Util.NIL_UUID);
             }
             else {
-                errorMsg = new StringTextComponent("Unable to create specs.");
+                errorMsg = new StringTextComponent("No se pudieron crear las especificaciones del Pokémon.");
                 errorMsg.setStyle(errorMsg.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg, Util.NIL_UUID);
             }
             return 1;
         }
+        
         Pokemon pokemon = PokemonFactory.create(spec);
         if(pokemon == null) {
             if(Config.CONFIG.isUseTranslatables()) {
@@ -58,12 +63,13 @@ public class SpawnShadow {
                 player.sendMessage(errorMsg2, Util.NIL_UUID);
             }
             else {
-                errorMsg2 = new StringTextComponent("Unable to find the pokemon specified.");
+                errorMsg2 = new StringTextComponent("No se pudo encontrar el Pokémon especificado.");
                 errorMsg2.setStyle(errorMsg2.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg2, Util.NIL_UUID);
             }
             return 1;
         }
+        
         RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         if(ribbon == null) {
             if(Config.CONFIG.isUseTranslatables()) {
@@ -72,24 +78,27 @@ public class SpawnShadow {
                 player.sendMessage(errorMsg3, Util.NIL_UUID);
             }
             else {
-                errorMsg3 = new StringTextComponent("Unable to find the Shadow Type ribbon! Was it removed?");
+                errorMsg3 = new StringTextComponent("¡No se encontró la cinta de tipo Sombrío! ¿Fue eliminada?");
                 errorMsg3.setStyle(errorMsg3.getStyle().applyFormat(TextFormatting.RED));
                 player.sendMessage(errorMsg3, Util.NIL_UUID);
             }
             return 1;
         }
+        
         pokemon.addRibbon(ribbon);
         pokemon.getOrSpawnPixelmon(player.getCommandSenderWorld(), player.getX(), player.getY() + 1, player.getZ());
+        
         if(Config.CONFIG.isUseTranslatables()) {
             successMsg = new TranslationTextComponent("clovergoshadow.spawnshadow.success");
             successMsg.setStyle(successMsg.getStyle().applyFormat(TextFormatting.GREEN));
             player.sendMessage(successMsg, Util.NIL_UUID);
         }
         else {
-            successMsg = new StringTextComponent("Spawned shadow pokemon near you!");
+            successMsg = new StringTextComponent("¡Has hecho aparecer un Pokémon Sombrío cerca de ti!");
             successMsg.setStyle(successMsg.getStyle().applyFormat(TextFormatting.GREEN));
             player.sendMessage(successMsg, Util.NIL_UUID);
         }
+        
         return 0;
     }
 }
