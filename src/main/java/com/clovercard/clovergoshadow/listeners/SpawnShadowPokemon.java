@@ -41,7 +41,7 @@ public class SpawnShadowPokemon {
                     msg = new TranslationTextComponent("clovergoshadow.spawn", shadow.getTranslatedName());
                 } else {
                     IFormattableTextComponent pokemonName = new StringTextComponent(shadow.getTranslatedName().getString())
-                        .mergeStyle(TextFormatting.DARK_PURPLE);
+                        .mergeStyle(TextFormatting.LIGHT_PURPLE);
                     msg = new StringTextComponent("¡Un Pokémon Oscuro ")
                         .mergeStyle(TextFormatting.GREEN)
                         .append(pokemonName)
