@@ -29,7 +29,7 @@ public class Reload {
                 player.sendMessage(msg, Util.NIL_UUID);
             }
             else {
-                System.out.println("Reloaded Config!");
+                System.out.println("Configuración recargada!");
             }
         }
         else {
@@ -40,7 +40,7 @@ public class Reload {
                 player.sendMessage(msg, Util.NIL_UUID);
             }
             else {
-                System.out.println("Failed To Reload Config!");
+                System.out.println("Fallo en recargase la configuración!");
             }
         }
         return 1;
