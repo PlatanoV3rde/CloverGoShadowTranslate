@@ -55,7 +55,7 @@ public class SpawnShadowPokemon {
                 NPCTrainer trainer = action.getOrCreateEntity();
                 trainer.getPersistentData().putBoolean("isshadowtrainer", true);
                 ArrayList<Pokemon> team = (ArrayList<Pokemon>) trainer.getPokemonStorage().getTeam();
-                team.forEach(pkm -> pkm.setNickname(new StringTextComponent("Shadow " + pkm.getTranslatedName().getString())));
+                team.forEach(pkm -> pkm.setNickname(new StringTextComponent("Oscuro " + pkm.getTranslatedName().getString())));
                 IFormattableTextComponent msg;
                 if (Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
