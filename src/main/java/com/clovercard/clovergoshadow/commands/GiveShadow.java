@@ -40,94 +40,91 @@ public class GiveShadow {
     }
 
     public int giveShadow(CommandSource src, String target, String specs) {
-        if(!(src.getEntity() instanceof ServerPlayerEntity)) return 1;
-        
-        ServerPlayerEntity player = (ServerPlayerEntity) src.getEntity();
+        ServerPlayerEntity sender = null;
+        if (src.getEntity() instanceof ServerPlayerEntity) {
+            sender = (ServerPlayerEntity) src.getEntity();
+        }
+
         ServerPlayerEntity receiver = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByName(target);
-        
-        if(receiver == null) {
-            sendErrorMessage(player, "clovergoshadow.giveshadow.error1", "¡No se pudo encontrar al jugador especificado!");
+
+        if (receiver == null) {
+            sendErrorMessage(src, "clovergoshadow.giveshadow.error1", "¡No se pudo encontrar al jugador especificado!");
             return 1;
         }
-        
+
         PokemonSpecification spec = PokemonSpecificationProxy.create(specs);
-        if(spec == null) {
-            sendErrorMessage(player, "clovergoshadow.giveshadow.error2", "No se pudieron crear las especificaciones del Pokémon.");
+        if (spec == null) {
+            sendErrorMessage(src, "clovergoshadow.giveshadow.error2", "No se pudieron crear las especificaciones del Pokémon.");
             return 1;
         }
-        
+
         Pokemon pokemon = PokemonFactory.create(spec);
-        if(pokemon == null) {
-            sendErrorMessage(player, "clovergoshadow.giveshadow.error3", "No se pudo encontrar el Pokémon especificado.");
+        if (pokemon == null) {
+            sendErrorMessage(src, "clovergoshadow.giveshadow.error3", "No se pudo encontrar el Pokémon especificado.");
             return 1;
         }
-        
+
         RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
-        if(ribbon == null) {
-            sendErrorMessage(player, "clovergoshadow.giveshadow.error4", "¡No se encontró la cinta de tipo Sombrío! ¿Fue eliminada?");
+        if (ribbon == null) {
+            sendErrorMessage(src, "clovergoshadow.giveshadow.error4", "¡No se encontró la cinta de tipo Sombrío! ¿Fue eliminada?");
             return 1;
         }
-        
+
         pokemon.addRibbon(ribbon);
         StorageProxy.getParty(receiver).add(pokemon);
-        
-        sendSuccessMessages(player, receiver, pokemon);
-        
+
+        sendSuccessMessages(src, receiver, pokemon);
+
         return 0;
     }
 
-    private void sendErrorMessage(ServerPlayerEntity player, String translationKey, String defaultMessage) {
-        IFormattableTextComponent errorMsg = Config.CONFIG.isUseTranslatables() 
+    private void sendErrorMessage(CommandSource src, String translationKey, String defaultMessage) {
+        IFormattableTextComponent errorMsg = Config.CONFIG.isUseTranslatables()
                 ? new TranslationTextComponent(translationKey)
                 : new StringTextComponent(defaultMessage);
         errorMsg.setStyle(errorMsg.getStyle().applyFormat(TextFormatting.RED));
-        player.sendMessage(errorMsg, Util.NIL_UUID);
+        src.sendFailure(errorMsg);
     }
 
-    private void sendSuccessMessages(ServerPlayerEntity player, ServerPlayerEntity receiver, Pokemon pokemon) {
-        // Get Pokémon name as string based on config
+    private void sendSuccessMessages(CommandSource src, ServerPlayerEntity receiver, Pokemon pokemon) {
         String pokemonNameStr = Config.CONFIG.isUseTranslatables()
                 ? pokemon.getSpecies().getTranslatedName().getString()
                 : pokemon.getSpecies().getName();
-        
+
         IFormattableTextComponent pokemonNameComponent = new StringTextComponent(pokemonNameStr)
                 .setStyle(Style.EMPTY.applyFormat(TextFormatting.YELLOW));
-        
+
         IFormattableTextComponent receiverNameComponent = new StringTextComponent(receiver.getName().getString())
                 .setStyle(Style.EMPTY.applyFormat(TextFormatting.AQUA));
 
-        if(Config.CONFIG.isUseTranslatables()) {
-            // Receiver message
+        if (Config.CONFIG.isUseTranslatables()) {
             IFormattableTextComponent successMsgR = new TranslationTextComponent("clovergoshadow.giveshadow.successreceiver")
-                    .append(pokemonNameComponent);
-            successMsgR.setStyle(successMsgR.getStyle().applyFormat(TextFormatting.GREEN));
-            
-            // Giver message
+                    .append(pokemonNameComponent)
+                    .setStyle(Style.EMPTY.applyFormat(TextFormatting.GREEN));
+
             IFormattableTextComponent successMsgG = new TranslationTextComponent("clovergoshadow.giveshadow.successgiver")
                     .append(receiverNameComponent)
                     .append(new StringTextComponent(" "))
-                    .append(pokemonNameComponent);
-            successMsgG.setStyle(successMsgG.getStyle().applyFormat(TextFormatting.GREEN));
-            
+                    .append(pokemonNameComponent)
+                    .setStyle(Style.EMPTY.applyFormat(TextFormatting.GREEN));
+
             receiver.sendMessage(successMsgR, Util.NIL_UUID);
-            player.sendMessage(successMsgG, Util.NIL_UUID);
+            src.sendSuccess(successMsgG, false);
         } else {
-            // Receiver message
             IFormattableTextComponent successMsgR = new StringTextComponent("¡Has recibido un ")
                     .append(pokemonNameComponent)
-                    .append(" Oscuro!");
-            successMsgR.setStyle(successMsgR.getStyle().applyFormat(TextFormatting.GREEN));
-            
-            // Giver message
+                    .append(" Oscuro!")
+                    .setStyle(Style.EMPTY.applyFormat(TextFormatting.GREEN));
+
             IFormattableTextComponent successMsgG = new StringTextComponent("¡Le enviaste a ")
                     .append(receiverNameComponent)
                     .append(" un ")
                     .append(pokemonNameComponent)
-                    .append(" Oscuro!");
-            successMsgG.setStyle(successMsgG.getStyle().applyFormat(TextFormatting.GREEN));
-            
+                    .append(" Oscuro!")
+                    .setStyle(Style.EMPTY.applyFormat(TextFormatting.GREEN));
+
             receiver.sendMessage(successMsgR, Util.NIL_UUID);
-            player.sendMessage(successMsgG, Util.NIL_UUID);
+            src.sendSuccess(successMsgG, false);
         }
     }
 }
