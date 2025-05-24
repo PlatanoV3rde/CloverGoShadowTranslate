@@ -46,6 +46,7 @@ public class CloverGoShadow {
         new GiveShadow(event.getDispatcher());
         new Reload(event.getDispatcher());
         new ModifyStats(event.getDispatcher());
+        new GiveRaidShadow(event.getDispatcher()); // Nuevo comando añadido aquí
 
         LOGGER.debug("SETTING UP CLOVERGOSHADOW CONFIG");
         Config.load();
