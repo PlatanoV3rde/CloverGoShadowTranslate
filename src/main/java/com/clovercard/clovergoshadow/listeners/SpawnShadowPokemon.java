@@ -22,6 +22,7 @@ public class SpawnShadowPokemon {
     public void onSpawn(SpawnEvent event) {
         if (event.action instanceof SpawnActionPokemon) {
             SpawnActionPokemon action = (SpawnActionPokemon) event.action;
+            // Determine whether pokemon is Shadow Type
             if (Math.random() < Config.CONFIG.getShadowSpawnPercent() / 100) {
                 Pokemon shadow = action.pokemon;
                 if (Config.CONFIG.getShadowBlackList().contains(shadow.getSpecies().getName())) return;
@@ -37,14 +38,12 @@ public class SpawnShadowPokemon {
                 if (Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawn", shadow.getTranslatedName());
                 } else {
-                    // Aquí concatenamos correctamente el nombre con el sufijo " Oscuro"
                     IFormattableTextComponent pokemonName = new StringTextComponent(shadow.getTranslatedName().getString())
                             .setStyle(Style.EMPTY.withColor(TextFormatting.LIGHT_PURPLE));
-                    msg = new StringTextComponent("¡Un Pokémon ")
+                    msg = new StringTextComponent("¡Un Pokémon Oscuro ")
                             .setStyle(Style.EMPTY.withColor(TextFormatting.GREEN))
                             .append(pokemonName)
-                            .append(new StringTextComponent(" Oscuro").setStyle(Style.EMPTY.withColor(TextFormatting.LIGHT_PURPLE)))
-                            .append(new StringTextComponent(" ha spawneado cerca de ti!").setStyle(Style.EMPTY.withColor(TextFormatting.GREEN)));
+                            .append(" ha spawneado cerca de ti!");
                 }
                 player.sendMessage(msg, Util.NIL_UUID);
             }
@@ -56,11 +55,7 @@ public class SpawnShadowPokemon {
                 NPCTrainer trainer = action.getOrCreateEntity();
                 trainer.getPersistentData().putBoolean("isshadowtrainer", true);
                 ArrayList<Pokemon> team = (ArrayList<Pokemon>) trainer.getPokemonStorage().getTeam();
-                // Cambiar nickname para que quede: "Charizard Oscuro"
-                team.forEach(pkm -> {
-                    String nombreOriginal = pkm.getTranslatedName().getString();
-                    pkm.setNickname(new StringTextComponent(nombreOriginal + " Oscuro"));
-                });
+                team.forEach(pkm -> pkm.setNickname(new StringTextComponent("Oscuro " + pkm.getTranslatedName().getString())));
                 IFormattableTextComponent msg;
                 if (Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
