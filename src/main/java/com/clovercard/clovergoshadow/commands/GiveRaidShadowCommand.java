@@ -58,17 +58,19 @@ public class GiveRaidShadowCommand {
                 "Tu inventario estaba lleno, el ítem fue soltado en el suelo."), target.getUUID());
         }
 
-        String successMessage = String.format("%s¡Raid oscura legendaria entregada a %s%s! Pokémon: %s%s",
-            TextFormatting.GREEN,
-            TextFormatting.AQUA,
-            target.getName().getString(),
-            TextFormatting.DARK_PURPLE,
-            speciesName
-        );
+        // ✅ Mensaje al operador
+        String successMessage = TextFormatting.GREEN + "¡Raid oscura legendaria entregada a " +
+            TextFormatting.AQUA + target.getName().getString() +
+            TextFormatting.GREEN + "! Pokémon: " +
+            TextFormatting.RED + speciesName;
 
         source.sendSuccess(new StringTextComponent(successMessage), true);
-        target.sendMessage(new StringTextComponent(TextFormatting.DARK_PURPLE +
-            "¡Has recibido una raid oscura legendaria de " + speciesName + "!"), target.getUUID());
+
+        // ✅ Mensaje al jugador
+        target.sendMessage(new StringTextComponent(
+            TextFormatting.GREEN + "¡Has recibido una raid oscura legendaria de " +
+            TextFormatting.RED + speciesName +
+            TextFormatting.GREEN + "!"), target.getUUID());
 
         return 1;
     }
@@ -82,12 +84,12 @@ public class GiveRaidShadowCommand {
         nbt.putString("clovergoshadowform", form);
 
         CompoundNBT displayTag = new CompoundNBT();
-        displayTag.putString("Name", "{\"text\":\"Flauta de Raid Legendaria Oscura\",\"color\":\"dark_purple\",\"italic\":false}");
+        displayTag.putString("Name", "{\"text\":\"Flauta de Raid Legendaria Oscura\",\"color\":\"red\",\"italic\":false}");
 
         ListNBT lore = new ListNBT();
         lore.add(StringNBT.valueOf("{\"text\":\"Usa para iniciar una raid legendaria oscura\",\"italic\":false,\"color\":\"gray\"}"));
-        lore.add(StringNBT.valueOf("{\"text\":\"Pokémon: " + species + "\",\"italic\":false,\"color\":\"dark_purple\"}"));
-        lore.add(StringNBT.valueOf("{\"text\":\"Forma: " + form + "\",\"italic\":false,\"color\":\"dark_purple\"}"));
+        lore.add(StringNBT.valueOf("{\"text\":\"Pokémon: " + species + "\",\"italic\":false,\"color\":\"red\"}"));
+        lore.add(StringNBT.valueOf("{\"text\":\"Forma: " + form + "\",\"italic\":false,\"color\":\"red\"}"));
 
         displayTag.put("Lore", lore);
         nbt.put("display", displayTag);
