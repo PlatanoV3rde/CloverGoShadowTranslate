@@ -35,15 +35,14 @@ public class SendOutPokemon {
         RibbonType equipped = reg.getValueUnsafe();
 
         if (equipped.equals(shadow)) {
-            ribbon.getRibbonData().setSuffix(
-                new StringTextComponent(" Oscuro").setStyle(Style.EMPTY.withColor(TextFormatting.DARK_PURPLE))
-            );
+            ribbon.setDisplayName(new StringTextComponent("Oscuro").setStyle(Style.EMPTY.withColor(TextFormatting.DARK_PURPLE)));
+            ribbon.getRibbonData().setSuffix(StringTextComponent.EMPTY);
         } else if (equipped.equals(purified)) {
-            ribbon.getRibbonData().setSuffix(
-                new StringTextComponent(" Purificado").setStyle(Style.EMPTY.withColor(TextFormatting.AQUA))
-            );
+            ribbon.setDisplayName(new StringTextComponent("Purificado").setStyle(Style.EMPTY.withColor(TextFormatting.AQUA)));
+            ribbon.getRibbonData().setSuffix(StringTextComponent.EMPTY);
         } else {
-            // Limpiar sufijo si no es ni Shadow ni Purified
+            // Limpiar sufijo y nombre visible para otros ribbons
+            ribbon.setDisplayName(StringTextComponent.EMPTY);
             ribbon.getRibbonData().setSuffix(StringTextComponent.EMPTY);
         }
     }
