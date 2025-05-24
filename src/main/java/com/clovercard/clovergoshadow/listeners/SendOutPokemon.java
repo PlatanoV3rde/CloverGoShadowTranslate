@@ -21,8 +21,7 @@ public class SendOutPokemon {
         Ribbon ribbon = event.getPokemon().getDisplayedRibbon();
 
         if (ribbon == null) {
-            // Si no tiene ribbon, aseguramos que no quede sufijo residual
-            event.getPokemon().getPokemonData().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+            // No ribbon, simplemente retornar
             return;
         }
 
