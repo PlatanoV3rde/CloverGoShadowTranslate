@@ -4,36 +4,45 @@ import com.clovercard.clovergoshadow.config.Config;
 import com.clovercard.clovergoshadow.enums.RibbonEnum;
 import com.clovercard.clovergoshadow.helpers.RibbonHelper;
 import com.pixelmonmod.api.registry.RegistryValue;
-import com.pixelmonmod.pixelmon.api.pokemon.ribbon.event.RibbonEvent;
+import com.pixelmonmod.pixelmon.api.events.PokemonSendOutEvent;
+import com.pixelmonmod.pixelmon.api.pokemon.ribbon.Ribbon;
 import com.pixelmonmod.pixelmon.api.pokemon.ribbon.type.RibbonType;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-public class RibbonEquipped {
-    @SubscribeEvent
-    public void ribbonEquipped(RibbonEvent.SetDisplayedRibbon event) {
+public class SendOutPokemon {
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onSendOut(PokemonSendOutEvent event) {
         if (Config.CONFIG.isUseTranslatables()) return;
-        
+
+        Ribbon ribbon = event.getPokemon().getDisplayedRibbon();
+
+        if (ribbon == null) {
+            return;
+        }
+
         RibbonType shadow = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         RibbonType purified = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.PURIFIED_RIBBON.getRibbonId());
-        
         if (shadow == null || purified == null) return;
-        if (event.getRibbon() == null) return;
-        
-        RegistryValue<RibbonType> reg = event.getRibbon().getType();
+
+        RegistryValue<RibbonType> reg = ribbon.getType();
         if (!reg.getValue().isPresent()) return;
-        
+
         RibbonType equipped = reg.getValueUnsafe();
-        
+
         if (equipped.equals(shadow)) {
-            event.getRibbon().setDisplayName(new StringTextComponent("Oscuro"));
-            event.getRibbon().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+            ribbon.getRibbonData().setSuffix(
+                new StringTextComponent(" Oscuro").setStyle(Style.EMPTY.withColor(TextFormatting.DARK_PURPLE))
+            );
         } else if (equipped.equals(purified)) {
-            event.getRibbon().setDisplayName(new StringTextComponent("Purificado"));
-            event.getRibbon().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+            ribbon.getRibbonData().setSuffix(
+                new StringTextComponent(" Purificado").setStyle(Style.EMPTY.withColor(TextFormatting.AQUA))
+            );
         } else {
-            // Opcional: puedes resetear el displayName o sufijo si quieres
-            event.getRibbon().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+            ribbon.getRibbonData().setSuffix(StringTextComponent.EMPTY);
         }
     }
 }
