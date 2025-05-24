@@ -12,16 +12,28 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 public class RibbonEquipped {
     @SubscribeEvent
     public void ribbonEquipped(RibbonEvent.SetDisplayedRibbon event) {
-        if(Config.CONFIG.isUseTranslatables()) return;
+        if (Config.CONFIG.isUseTranslatables()) return;
+        
         RibbonType shadow = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         RibbonType purified = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.PURIFIED_RIBBON.getRibbonId());
-        if(shadow == null || purified == null) return;
-        if(event.getRibbon() == null) return;
+        
+        if (shadow == null || purified == null) return;
+        if (event.getRibbon() == null) return;
+        
         RegistryValue<RibbonType> reg = event.getRibbon().getType();
-        if(!reg.getValue().isPresent()) return;
+        if (!reg.getValue().isPresent()) return;
+        
         RibbonType equipped = reg.getValueUnsafe();
-        // Cambiar de prefijo a sufijo para que salga "Charizard Oscuro"
-        if(equipped.equals(shadow)) event.getRibbon().getRibbonData().setSuffix(new StringTextComponent(" Oscuro"));
-        if(equipped.equals(purified)) event.getRibbon().getRibbonData().setSuffix(new StringTextComponent(" Purificado"));
+        
+        if (equipped.equals(shadow)) {
+            event.getRibbon().setDisplayName(new StringTextComponent("Oscuro"));
+            event.getRibbon().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+        } else if (equipped.equals(purified)) {
+            event.getRibbon().setDisplayName(new StringTextComponent("Purificado"));
+            event.getRibbon().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+        } else {
+            // Opcional: puedes resetear el displayName o sufijo si quieres
+            event.getRibbon().getRibbonData().setSuffix(StringTextComponent.EMPTY);
+        }
     }
 }
