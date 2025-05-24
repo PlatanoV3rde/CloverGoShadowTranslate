@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class GiveRaidShadow {
-    public GiveRaidShadow(CommandDispatcher<CommandSource> dispatcher) {
+public class GiveRaidShadowCommand {
+    public GiveRaidShadowCommand(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("clovergoshadow")
             .requires(source -> source.hasPermission(2))
             .then(Commands.literal("giveraidshadow")
@@ -28,8 +28,7 @@ public class GiveRaidShadow {
                         return giveRandomLegendaryShadowRaid(context.getSource(), target);
                     })
                 )
-            )
-        );
+            );
     }
 
     private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
