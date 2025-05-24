@@ -28,7 +28,8 @@ public class GiveRaidShadowCommand {
                         return giveRandomLegendaryShadowRaid(context.getSource(), target);
                     })
                 )
-            );
+            )
+        );
     }
 
     private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
