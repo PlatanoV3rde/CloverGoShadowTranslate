@@ -37,6 +37,7 @@ public class SpawnShadowPokemon {
                 if (Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawn", shadow.getTranslatedName());
                 } else {
+                    // Aquí concatenamos correctamente el nombre con el sufijo " Oscuro"
                     IFormattableTextComponent pokemonName = new StringTextComponent(shadow.getTranslatedName().getString())
                             .setStyle(Style.EMPTY.withColor(TextFormatting.LIGHT_PURPLE));
                     msg = new StringTextComponent("¡Un Pokémon ")
@@ -55,7 +56,11 @@ public class SpawnShadowPokemon {
                 NPCTrainer trainer = action.getOrCreateEntity();
                 trainer.getPersistentData().putBoolean("isshadowtrainer", true);
                 ArrayList<Pokemon> team = (ArrayList<Pokemon>) trainer.getPokemonStorage().getTeam();
-                team.forEach(pkm -> pkm.setNickname(new StringTextComponent(pkm.getTranslatedName().getString() + " Oscuro")));
+                // Cambiar nickname para que quede: "Charizard Oscuro"
+                team.forEach(pkm -> {
+                    String nombreOriginal = pkm.getTranslatedName().getString();
+                    pkm.setNickname(new StringTextComponent(nombreOriginal + " Oscuro"));
+                });
                 IFormattableTextComponent msg;
                 if (Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
