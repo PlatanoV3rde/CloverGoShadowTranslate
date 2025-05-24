@@ -22,7 +22,6 @@ public class SpawnShadowPokemon {
     public void onSpawn(SpawnEvent event) {
         if (event.action instanceof SpawnActionPokemon) {
             SpawnActionPokemon action = (SpawnActionPokemon) event.action;
-            // Determine whether pokemon is Shadow Type
             if (Math.random() < Config.CONFIG.getShadowSpawnPercent() / 100) {
                 Pokemon shadow = action.pokemon;
                 if (Config.CONFIG.getShadowBlackList().contains(shadow.getSpecies().getName())) return;
@@ -40,10 +39,11 @@ public class SpawnShadowPokemon {
                 } else {
                     IFormattableTextComponent pokemonName = new StringTextComponent(shadow.getTranslatedName().getString())
                             .setStyle(Style.EMPTY.withColor(TextFormatting.LIGHT_PURPLE));
-                    msg = new StringTextComponent("¡Un Pokémon Oscuro ")
+                    msg = new StringTextComponent("¡Un Pokémon ")
                             .setStyle(Style.EMPTY.withColor(TextFormatting.GREEN))
                             .append(pokemonName)
-                            .append(" ha spawneado cerca de ti!");
+                            .append(new StringTextComponent(" Oscuro").setStyle(Style.EMPTY.withColor(TextFormatting.LIGHT_PURPLE)))
+                            .append(new StringTextComponent(" ha spawneado cerca de ti!").setStyle(Style.EMPTY.withColor(TextFormatting.GREEN)));
                 }
                 player.sendMessage(msg, Util.NIL_UUID);
             }
@@ -55,7 +55,7 @@ public class SpawnShadowPokemon {
                 NPCTrainer trainer = action.getOrCreateEntity();
                 trainer.getPersistentData().putBoolean("isshadowtrainer", true);
                 ArrayList<Pokemon> team = (ArrayList<Pokemon>) trainer.getPokemonStorage().getTeam();
-                team.forEach(pkm -> pkm.setNickname(new StringTextComponent("Oscuro " + pkm.getTranslatedName().getString())));
+                team.forEach(pkm -> pkm.setNickname(new StringTextComponent(pkm.getTranslatedName().getString() + " Oscuro")));
                 IFormattableTextComponent msg;
                 if (Config.CONFIG.isUseTranslatables()) {
                     msg = new TranslationTextComponent("clovergoshadow.spawntrainer");
