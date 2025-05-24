@@ -17,9 +17,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class GiveRaidShadowCommand {
-    
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+public class GiveRaidShadow {
+    public GiveRaidShadow(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("clovergoshadow")
             .requires(source -> source.hasPermission(2))
             .then(Commands.literal("giveraidshadow")
@@ -33,8 +32,7 @@ public class GiveRaidShadowCommand {
         );
     }
 
-    private static int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
-        // Obtener todos los Pokémon legendarios/míticos registrados
+    private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
         List<RegistryValue<Species>> allLegendaries = PixelmonSpecies.getAll()
             .stream()
             .filter(reg -> reg.getValue()
@@ -48,17 +46,14 @@ public class GiveRaidShadowCommand {
             return 0;
         }
 
-        // Seleccionar uno aleatorio
         RegistryValue<Species> randomLegendary = allLegendaries.get(
             new Random().nextInt(allLegendaries.size()));
 
         String speciesName = randomLegendary.getNameOrId();
-        String formName = "shadow"; // Forma oscura
+        String formName = "shadow";
 
-        // Crear el ítem de raid
         ItemStack raidItem = createShadowRaidItem(speciesName, formName);
 
-        // Dar el ítem al jugador
         if (!target.inventory.add(raidItem)) {
             target.drop(raidItem, false);
             target.sendMessage(
@@ -68,7 +63,6 @@ public class GiveRaidShadowCommand {
             );
         }
 
-        // Mensajes de confirmación
         String successMessage = String.format("%s¡Raid oscura legendaria entregada a %s%s! Pokémon: %s%s",
             TextFormatting.GREEN,
             TextFormatting.AQUA,
@@ -87,16 +81,14 @@ public class GiveRaidShadowCommand {
         return 1;
     }
 
-    private static ItemStack createShadowRaidItem(String species, String form) {
+    private ItemStack createShadowRaidItem(String species, String form) {
         ItemStack flute = new ItemStack(PixelmonItems.poke_flute.getItem());
         CompoundNBT nbt = flute.getOrCreateTag();
         
-        // Configurar NBT para la raid oscura (compatible con WishPieceInteraction)
         nbt.putBoolean("clovergoshadowwishingpiece", true);
         nbt.putString("clovergoshadowspecies", species);
         nbt.putString("clovergoshadowform", form);
         
-        // Configurar nombre y lore del ítem
         CompoundNBT displayTag = new CompoundNBT();
         displayTag.putString("Name", "{\"text\":\"Flauta de Raid Legendaria Oscura\",\"color\":\"dark_purple\",\"italic\":false}");
         
