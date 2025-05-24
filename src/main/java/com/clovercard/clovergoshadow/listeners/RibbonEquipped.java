@@ -20,7 +20,8 @@ public class RibbonEquipped {
         RegistryValue<RibbonType> reg = event.getRibbon().getType();
         if(!reg.getValue().isPresent()) return;
         RibbonType equipped = reg.getValueUnsafe();
-        if(equipped.equals(shadow)) event.getRibbon().getRibbonData().setPrefix(new StringTextComponent("Oscuro "));
-        if(equipped.equals(purified)) event.getRibbon().getRibbonData().setPrefix(new StringTextComponent("Purificado "));
+        // Cambiar de prefijo a sufijo
+        if(equipped.equals(shadow)) event.getRibbon().getRibbonData().setSuffix(new StringTextComponent(" Oscuro"));
+        if(equipped.equals(purified)) event.getRibbon().getRibbonData().setSuffix(new StringTextComponent(" Purificado"));
     }
 }
