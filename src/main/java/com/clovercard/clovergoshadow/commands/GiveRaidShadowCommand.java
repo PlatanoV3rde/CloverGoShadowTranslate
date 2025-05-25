@@ -2,6 +2,7 @@ package com.clovercard.clovergoshadow.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.pixelmonmod.api.registry.RegistryValue;
 import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
@@ -25,15 +26,15 @@ public class GiveRaidShadowCommand {
 
     public GiveRaidShadowCommand(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("clovergoshadow")
-            .requires(src -> src.hasPermission(2))
+            .requires(src -> src.hasPermissionLevel(2))
             .then(Commands.literal("giveraidshadow")
                 .then(Commands.argument("target", EntityArgument.player())
-                    // Sin Pokémon → aleatorio
+                    // Sin species: aleatorio
                     .executes(ctx -> {
                         ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
                         return giveRandomLegendaryShadowRaid(ctx.getSource(), target);
                     })
-                    // Con nombre de especie
+                    // Con species específico
                     .then(Commands.argument("species", StringArgumentType.word())
                         .executes(ctx -> {
                             ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
@@ -47,28 +48,31 @@ public class GiveRaidShadowCommand {
     }
 
     private int giveRandomLegendaryShadowRaid(CommandSource src, ServerPlayerEntity target) {
-        List<Species> legendaries = PixelmonSpecies.getAll()
+        List<RegistryValue<Species>> legendariesRV = PixelmonSpecies.getAll()
             .stream()
-            .filter(species -> species.isLegendary())
+            .filter(rv -> rv.get(Species.class, rv.getRegistryName().getPath()).isLegendary())
             .collect(Collectors.toList());
 
-        if (legendaries.isEmpty()) {
+        if (legendariesRV.isEmpty()) {
             src.sendFailure(new StringTextComponent(TextFormatting.RED +
                 "No se encontraron Pokémon legendarios registrados!"));
             return 0;
         }
 
-        Species chosen = legendaries.get(new Random().nextInt(legendaries.size()));
-        return giveRaidItem(src, target, chosen.getName(), "shadow");
+        RegistryValue<Species> rv = legendariesRV.get(new Random().nextInt(legendariesRV.size()));
+        Species species = rv.get(Species.class, rv.getRegistryName().getPath());
+        return giveRaidItem(src, target, species.getName(), "shadow");
     }
 
-    private int giveSpecificShadowRaid(CommandSource src, ServerPlayerEntity target, String speciesName) {
-        Species species = PixelmonSpecies.fromName(speciesName.toLowerCase());
-        if (species == null) {
+    private int giveSpecificShadowRaid(CommandSource src, ServerPlayerEntity target, String speciesNameLower) {
+        RegistryValue<Species> rv = PixelmonSpecies.fromName(speciesNameLower.toLowerCase());
+        if (rv == null) {
             src.sendFailure(new StringTextComponent(TextFormatting.RED +
-                "¡Pokémon no válido: " + speciesName));
+                "¡Pokémon no válido: " + speciesNameLower));
             return 0;
         }
+
+        Species species = rv.get(Species.class, rv.getRegistryName().getPath());
         return giveRaidItem(src, target, species.getName(), "shadow");
     }
 
