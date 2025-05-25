@@ -2,26 +2,31 @@ package com.clovercard.clovergoshadow;
 
 import com.clovercard.clovergoshadow.commands.*;
 import com.clovercard.clovergoshadow.config.Config;
-import com.clovercard.clovergoshadow.listeners.BattleStartListener;
 import com.clovercard.clovergoshadow.listeners.*;
+
 import com.pixelmonmod.pixelmon.Pixelmon;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @Mod(CloverGoShadow.MOD_ID)
 @Mod.EventBusSubscriber(modid = CloverGoShadow.MOD_ID)
 public class CloverGoShadow {
-    public static final Logger LOGGER = LogManager.getLogger();
     public static final String MOD_ID = "clovergoshadow";
+    public static final Logger LOGGER = LogManager.getLogger();
 
     public CloverGoShadow() {
+        LOGGER.info("Inicializando CloverGoShadow...");
+
+        // Registrar eventos Forge
         MinecraftForge.EVENT_BUS.register(this);
-        //Register listeners
-        LOGGER.debug("REGISTERING CLOVERGOSHADOW LISTENERS");
+
+        // Registrar listeners en el bus de Pixelmon
+        LOGGER.debug("Registrando listeners de CloverGoShadow...");
         Pixelmon.EVENT_BUS.register(new DetectShadowPokemon());
         Pixelmon.EVENT_BUS.register(new SpawnShadowPokemon());
         Pixelmon.EVENT_BUS.register(new ExperienceGain());
@@ -38,19 +43,20 @@ public class CloverGoShadow {
 
     @SubscribeEvent
     public static void onCommand(RegisterCommandsEvent event) {
-        //Register commands
-        LOGGER.debug("REGISTERING CLOVERGOSHADOW COMMANDS");
+        LOGGER.debug("Registrando comandos de CloverGoShadow...");
+
+        // Comandos registrados
         new Purify(event.getDispatcher());
         new ShowStats(event.getDispatcher());
         new SpawnShadow(event.getDispatcher());
         new GiveShadow(event.getDispatcher());
         new Reload(event.getDispatcher());
         new ModifyStats(event.getDispatcher());
-        GiveRaidShadowCommand.register(event.getDispatcher()); // Cambiado para usar el método estático
+        GiveRaidShadowCommand.register(event.getDispatcher()); // Usa método estático
 
-        LOGGER.debug("SETTING UP CLOVERGOSHADOW CONFIG");
+        LOGGER.debug("Cargando configuración de CloverGoShadow...");
         Config.load();
 
-        LOGGER.debug("DONE!");
+        LOGGER.info("¡CloverGoShadow listo!");
     }
 }
