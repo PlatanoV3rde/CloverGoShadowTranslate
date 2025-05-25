@@ -46,7 +46,7 @@ public class CloverGoShadow {
         new GiveShadow(event.getDispatcher());
         new Reload(event.getDispatcher());
         new ModifyStats(event.getDispatcher());
-        new GiveRaidShadowCommand(event.getDispatcher()); 
+        GiveRaidShadowCommand.register(event.getDispatcher()); // Cambiado para usar el método estático
 
         LOGGER.debug("SETTING UP CLOVERGOSHADOW CONFIG");
         Config.load();
