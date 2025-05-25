@@ -23,28 +23,29 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class GiveRaidShadowCommand {
-    public GiveRaidShadowCommand(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(Commands.literal("clovergoshadow")
-            .requires(source -> source.hasPermission(2))
-            .then(Commands.literal("giveraidshadow")
-                .then(Commands.argument("target", EntityArgument.player())
-                    .executes(context -> { // Versión aleatoria (original)
-                        ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
-                        return giveRandomLegendaryShadowRaid(context.getSource(), target);
-                    })
-                    .then(Commands.argument("pokemon", StringArgumentType.string())
-                        .executes(context -> { // Versión con Pokémon especificado
+    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(
+            Commands.literal("clovergoshadow")
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("giveraidshadow")
+                    .then(Commands.argument("target", EntityArgument.player())
+                        .executes(context -> { // Random version
                             ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
-                            String pokemonSpec = StringArgumentType.getString(context, "pokemon");
-                            return giveCustomShadowRaid(context.getSource(), target, pokemonSpec);
+                            return giveRandomLegendaryShadowRaid(context.getSource(), target);
                         })
+                        .then(Commands.argument("pokemon", StringArgumentType.string())
+                            .executes(context -> { // Custom version
+                                ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
+                                String pokemonSpec = StringArgumentType.getString(context, "pokemon");
+                                return giveCustomShadowRaid(context.getSource(), target, pokemonSpec);
+                            })
+                        )
+                    )
                 )
-            )
         );
     }
 
-    // Método para Pokémon aleatorio (original)
-    private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
+    private static int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
         List<Species> allLegendaries = PixelmonSpecies.getAll()
             .stream()
             .filter(Species::isLegendary)
@@ -60,8 +61,7 @@ public class GiveRaidShadowCommand {
         return createAndGiveFlute(source, target, randomLegendary.getName(), "shadow");
     }
 
-    // Método para Pokémon personalizado (nuevo)
-    private int giveCustomShadowRaid(CommandSource source, ServerPlayerEntity target, String pokemonSpec) {
+    private static int giveCustomShadowRaid(CommandSource source, ServerPlayerEntity target, String pokemonSpec) {
         Pokemon pokemon = PixelCommand.createPokemon(pokemonSpec);
         if (pokemon == null) {
             source.sendFailure(new StringTextComponent(TextFormatting.RED +
@@ -72,8 +72,7 @@ public class GiveRaidShadowCommand {
         return createAndGiveFlute(source, target, pokemon.getSpecies().getName(), "shadow");
     }
 
-    // Método común para crear y entregar la flauta
-    private int createAndGiveFlute(CommandSource source, ServerPlayerEntity target, String speciesName, String formName) {
+    private static int createAndGiveFlute(CommandSource source, ServerPlayerEntity target, String speciesName, String formName) {
         ItemStack raidItem = createShadowRaidItem(speciesName, formName);
 
         if (!target.inventory.add(raidItem)) {
@@ -82,7 +81,6 @@ public class GiveRaidShadowCommand {
                 "Tu inventario estaba lleno, el ítem fue soltado en el suelo."), target.getUUID());
         }
 
-        // Mensaje al operador
         String successMessage = TextFormatting.GREEN + "¡Raid oscura entregada a " +
             TextFormatting.AQUA + target.getName().getString() +
             TextFormatting.GREEN + "! Pokémon: " +
@@ -90,7 +88,6 @@ public class GiveRaidShadowCommand {
 
         source.sendSuccess(new StringTextComponent(successMessage), true);
 
-        // Mensaje al jugador
         target.sendMessage(new StringTextComponent(
             TextFormatting.GREEN + "¡Has recibido una raid oscura de " +
             TextFormatting.RED + speciesName +
@@ -99,8 +96,7 @@ public class GiveRaidShadowCommand {
         return 1;
     }
 
-    // Método original para crear el ítem (sin cambios)
-    private ItemStack createShadowRaidItem(String species, String form) {
+    private static ItemStack createShadowRaidItem(String species, String form) {
         ItemStack flute = new ItemStack(PixelmonItems.poke_flute.getItem());
         CompoundNBT nbt = flute.getOrCreateTag();
 
