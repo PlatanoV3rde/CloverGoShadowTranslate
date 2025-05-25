@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
+import com.pixelmonmod.api.registry.Registry;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -83,14 +84,23 @@ public class GiveRaidShadowCommand {
     }
 
     private int giveSpecificShadowRaid(CommandSource source, ServerPlayerEntity target, String speciesName) {
-        Species species;
-
         if (!PixelmonSpecies.has(speciesName.toLowerCase())) {
             source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
             return 0;
         }
 
-        species = PixelmonSpecies.fromName(speciesName.toLowerCase()).get();
+        var speciesValue = PixelmonSpecies.fromName(speciesName.toLowerCase());
+        if (speciesValue == null) {
+            source.sendFailure(new StringTextComponent(TextFormatting.RED + "No se pudo encontrar la especie: " + speciesName));
+            return 0;
+        }
+
+        Species species = Registry.get(Species.class, speciesValue.getRegistryName());
+        if (species == null) {
+            source.sendFailure(new StringTextComponent(TextFormatting.RED + "Error al cargar la especie: " + speciesName));
+            return 0;
+        }
+
         String formName = "shadow";
 
         ItemStack raidItem = createShadowRaidItem(species.getName(), formName);
