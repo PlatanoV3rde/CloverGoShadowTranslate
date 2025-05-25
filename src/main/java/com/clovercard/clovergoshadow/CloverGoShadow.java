@@ -1,6 +1,12 @@
 package com.clovercard.clovergoshadow;
 
-import com.clovercard.clovergoshadow.commands.*;
+import com.clovercard.clovergoshadow.commands.GiveRaidShadowCommand;  // ← AÑADIDO
+import com.clovercard.clovergoshadow.commands.ModifyStats;
+import com.clovercard.clovergoshadow.commands.Purify;
+import com.clovercard.clovergoshadow.commands.Reload;
+import com.clovercard.clovergoshadow.commands.ShowStats;
+import com.clovercard.clovergoshadow.commands.SpawnShadow;
+import com.clovercard.clovergoshadow.commands.GiveShadow;
 import com.clovercard.clovergoshadow.config.Config;
 import com.clovercard.clovergoshadow.listeners.*;
 
@@ -52,7 +58,7 @@ public class CloverGoShadow {
         new GiveShadow(event.getDispatcher());
         new Reload(event.getDispatcher());
         new ModifyStats(event.getDispatcher());
-        new GiveRaidShadowCommand(event.getDispatcher()); // Cambiado aquí
+        new GiveRaidShadowCommand(event.getDispatcher()); // Ahora sí encuentra la clase
 
         LOGGER.debug("Cargando configuración de CloverGoShadow...");
         Config.load();
