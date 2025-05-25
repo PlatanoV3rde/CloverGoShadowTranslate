@@ -1,11 +1,8 @@
-package com.clovercard.clovergoshadow.commands;
-
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
-import com.pixelmonmod.api.registry.Registry;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -84,26 +81,15 @@ public class GiveRaidShadowCommand {
     }
 
     private int giveSpecificShadowRaid(CommandSource source, ServerPlayerEntity target, String speciesName) {
-        if (!PixelmonSpecies.has(speciesName.toLowerCase())) {
-            source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
-            return 0;
-        }
-
-        var speciesValue = PixelmonSpecies.fromName(speciesName.toLowerCase());
+        PixelmonSpecies speciesValue = PixelmonSpecies.fromName(speciesName.toLowerCase());
         if (speciesValue == null) {
-            source.sendFailure(new StringTextComponent(TextFormatting.RED + "No se pudo encontrar la especie: " + speciesName));
-            return 0;
-        }
-
-        Species species = Registry.get(Species.class, speciesValue.getRegistryName());
-        if (species == null) {
-            source.sendFailure(new StringTextComponent(TextFormatting.RED + "Error al cargar la especie: " + speciesName));
+            source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
             return 0;
         }
 
         String formName = "shadow";
 
-        ItemStack raidItem = createShadowRaidItem(species.getName(), formName);
+        ItemStack raidItem = createShadowRaidItem(speciesValue.getName(), formName);
 
         if (!target.inventory.add(raidItem)) {
             target.drop(raidItem, false);
@@ -112,7 +98,7 @@ public class GiveRaidShadowCommand {
         }
 
         String successMessage = TextFormatting.GREEN + "¡Raid oscura legendaria de " +
-            TextFormatting.RED + species.getName() +
+            TextFormatting.RED + speciesValue.getName() +
             TextFormatting.GREEN + " entregada a " +
             TextFormatting.AQUA + target.getName().getString() + "!";
 
@@ -120,7 +106,7 @@ public class GiveRaidShadowCommand {
 
         target.sendMessage(new StringTextComponent(
             TextFormatting.GREEN + "¡Has recibido una raid oscura legendaria de " +
-            TextFormatting.RED + species.getName() +
+            TextFormatting.RED + speciesValue.getName() +
             TextFormatting.GREEN + "!"), target.getUUID());
 
         return 1;
