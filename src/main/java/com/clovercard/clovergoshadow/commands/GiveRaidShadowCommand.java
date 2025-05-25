@@ -2,7 +2,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
-import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -42,7 +41,7 @@ public class GiveRaidShadowCommand {
     }
 
     private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
-        List<Species> allLegendaries = PixelmonSpecies.getAll()
+        List<Species> allLegendaries = Species.getAll()
             .stream()
             .filter(Species::isLegendary)
             .collect(Collectors.toList());
@@ -81,7 +80,7 @@ public class GiveRaidShadowCommand {
     }
 
     private int giveSpecificShadowRaid(CommandSource source, ServerPlayerEntity target, String speciesName) {
-        PixelmonSpecies speciesValue = PixelmonSpecies.fromName(speciesName.toLowerCase());
+        Species speciesValue = Species.get(speciesName.toLowerCase());
         if (speciesValue == null) {
             source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
             return 0;
