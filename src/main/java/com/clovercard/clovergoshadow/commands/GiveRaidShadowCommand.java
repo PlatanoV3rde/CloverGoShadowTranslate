@@ -7,6 +7,7 @@ import com.pixelmonmod.pixelmon.api.pokemon.PokemonFactory;
 import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
+import com.pixelmonmod.api.pokemon.PokemonSpecification;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -62,7 +63,9 @@ public class GiveRaidShadowCommand {
     }
 
     private static int darRaidPersonalizada(CommandSource source, ServerPlayerEntity target, String pokemonSpec) {
-        Pokemon pokemon = PokemonFactory.create(pokemonSpec);
+        PokemonSpecification spec = PokemonSpecification.of(pokemonSpec);
+        Pokemon pokemon = PokemonFactory.create(spec);
+
         if (pokemon == null) {
             source.sendFailure(new StringTextComponent(TextFormatting.RED +
                 "¡Pokémon no válido! Usa formato como: pikachu, charizard level=50"));
