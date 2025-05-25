@@ -16,46 +16,50 @@ import net.minecraft.nbt.StringNBT;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 public class GiveRaidShadowCommand {
+
     public GiveRaidShadowCommand(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("clovergoshadow")
             .requires(source -> source.hasPermission(2))
             .then(Commands.literal("giveraidshadow")
                 .then(Commands.argument("target", EntityArgument.player())
-                    .then(Commands.argument("pokemon", StringArgumentType.word())
+                    .executes(context -> {
+                        ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
+                        return giveRandomLegendaryShadowRaid(context.getSource(), target);
+                    })
+                    .then(Commands.argument("species", StringArgumentType.word())
                         .executes(context -> {
                             ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
-                            String speciesName = StringArgumentType.getString(context, "pokemon");
-                            return giveSpecificShadowRaid(context.getSource(), target, speciesName, "shadow");
+                            String speciesName = StringArgumentType.getString(context, "species");
+                            return giveSpecificShadowRaid(context.getSource(), target, speciesName);
                         })
-                        .then(Commands.argument("form", StringArgumentType.word())
-                            .executes(context -> {
-                                ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
-                                String speciesName = StringArgumentType.getString(context, "pokemon");
-                                String form = StringArgumentType.getString(context, "form");
-                                return giveSpecificShadowRaid(context.getSource(), target, speciesName, form);
-                            })
-                        )
                     )
                 )
             )
         );
     }
 
-    private int giveSpecificShadowRaid(CommandSource source, ServerPlayerEntity target, String speciesName, String form) {
-        Species species;
-        try {
-            species = PixelmonSpecies.fromName(speciesName.toLowerCase());
-            if (species == null || !species.isPresent()) {
-                source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
-                return 0;
-            }
-        } catch (Exception e) {
-            source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Error al encontrar el Pokémon: " + speciesName));
+    private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
+        List<Species> allLegendaries = PixelmonSpecies.getAll()
+            .stream()
+            .filter(Species::isLegendary)
+            .collect(Collectors.toList());
+
+        if (allLegendaries.isEmpty()) {
+            source.sendFailure(new StringTextComponent(TextFormatting.RED +
+                "No se encontraron Pokémon legendarios registrados!"));
             return 0;
         }
 
-        ItemStack raidItem = createShadowRaidItem(species.getName(), form);
+        Species randomLegendary = allLegendaries.get(new Random().nextInt(allLegendaries.size()));
+        String speciesName = randomLegendary.getName();
+        String formName = "shadow";
+
+        ItemStack raidItem = createShadowRaidItem(speciesName, formName);
 
         if (!target.inventory.add(raidItem)) {
             target.drop(raidItem, false);
@@ -63,17 +67,49 @@ public class GiveRaidShadowCommand {
                 "Tu inventario estaba lleno, el ítem fue soltado en el suelo."), target.getUUID());
         }
 
-        // Mensaje para el operador
-        source.sendSuccess(new StringTextComponent(TextFormatting.GREEN +
-            "¡Flauta entregada a " + TextFormatting.AQUA + target.getName().getString() +
+        String successMessage = TextFormatting.GREEN + "¡Raid oscura legendaria entregada a " +
+            TextFormatting.AQUA + target.getName().getString() +
             TextFormatting.GREEN + "! Pokémon: " +
-            TextFormatting.RED + species.getName() +
-            TextFormatting.GREEN + ", Forma: " +
-            TextFormatting.RED + form), true);
+            TextFormatting.RED + speciesName;
 
-        // Mensaje para el jugador
-        target.sendMessage(new StringTextComponent(TextFormatting.GREEN +
-            "¡Has recibido una flauta de raid legendaria oscura de " +
+        source.sendSuccess(new StringTextComponent(successMessage), true);
+
+        target.sendMessage(new StringTextComponent(
+            TextFormatting.GREEN + "¡Has recibido una raid oscura legendaria de " +
+            TextFormatting.RED + speciesName +
+            TextFormatting.GREEN + "!"), target.getUUID());
+
+        return 1;
+    }
+
+    private int giveSpecificShadowRaid(CommandSource source, ServerPlayerEntity target, String speciesName) {
+        Species species;
+
+        if (!PixelmonSpecies.has(speciesName.toLowerCase())) {
+            source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
+            return 0;
+        }
+
+        species = PixelmonSpecies.fromName(speciesName.toLowerCase()).get();
+        String formName = "shadow";
+
+        ItemStack raidItem = createShadowRaidItem(species.getName(), formName);
+
+        if (!target.inventory.add(raidItem)) {
+            target.drop(raidItem, false);
+            target.sendMessage(new StringTextComponent(TextFormatting.YELLOW +
+                "Tu inventario estaba lleno, el ítem fue soltado en el suelo."), target.getUUID());
+        }
+
+        String successMessage = TextFormatting.GREEN + "¡Raid oscura legendaria de " +
+            TextFormatting.RED + species.getName() +
+            TextFormatting.GREEN + " entregada a " +
+            TextFormatting.AQUA + target.getName().getString() + "!";
+
+        source.sendSuccess(new StringTextComponent(successMessage), true);
+
+        target.sendMessage(new StringTextComponent(
+            TextFormatting.GREEN + "¡Has recibido una raid oscura legendaria de " +
             TextFormatting.RED + species.getName() +
             TextFormatting.GREEN + "!"), target.getUUID());
 
