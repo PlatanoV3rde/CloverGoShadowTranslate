@@ -1,7 +1,11 @@
+package com.clovercard.clovergoshadow.commands;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.pixelmonmod.api.registry.RegistryValue;
 import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
+import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -21,18 +25,20 @@ public class GiveRaidShadowCommand {
 
     public GiveRaidShadowCommand(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("clovergoshadow")
-            .requires(source -> source.hasPermission(2))
+            .requires(src -> src.hasPermissionLevel(2))
             .then(Commands.literal("giveraidshadow")
                 .then(Commands.argument("target", EntityArgument.player())
-                    .executes(context -> {
-                        ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
-                        return giveRandomLegendaryShadowRaid(context.getSource(), target);
+                    // Sin especificar species → aleatorio
+                    .executes(ctx -> {
+                        ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
+                        return giveRandomLegendaryShadowRaid(ctx.getSource(), target);
                     })
+                    // Con species explícito
                     .then(Commands.argument("species", StringArgumentType.word())
-                        .executes(context -> {
-                            ServerPlayerEntity target = EntityArgument.getPlayer(context, "target");
-                            String speciesName = StringArgumentType.getString(context, "species");
-                            return giveSpecificShadowRaid(context.getSource(), target, speciesName);
+                        .executes(ctx -> {
+                            ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
+                            String speciesName = StringArgumentType.getString(ctx, "species");
+                            return giveSpecificShadowRaid(ctx.getSource(), target, speciesName);
                         })
                     )
                 )
@@ -40,72 +46,58 @@ public class GiveRaidShadowCommand {
         );
     }
 
-    private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
-        List<Species> allLegendaries = Species.getAll()
+    private int giveRandomLegendaryShadowRaid(CommandSource src, ServerPlayerEntity target) {
+        // PixelmonSpecies.getAll() devuelve RegistryValue<Species>
+        List<RegistryValue<Species>> allLegendariesRV = PixelmonSpecies.getAll()
             .stream()
-            .filter(Species::isLegendary)
+            .filter(rv -> rv.get().isLegendary())
             .collect(Collectors.toList());
 
-        if (allLegendaries.isEmpty()) {
-            source.sendFailure(new StringTextComponent(TextFormatting.RED +
+        if (allLegendariesRV.isEmpty()) {
+            src.sendFailure(new StringTextComponent(TextFormatting.RED +
                 "No se encontraron Pokémon legendarios registrados!"));
             return 0;
         }
 
-        Species randomLegendary = allLegendaries.get(new Random().nextInt(allLegendaries.size()));
-        String speciesName = randomLegendary.getName();
-        String formName = "shadow";
-
-        ItemStack raidItem = createShadowRaidItem(speciesName, formName);
-
-        if (!target.inventory.add(raidItem)) {
-            target.drop(raidItem, false);
-            target.sendMessage(new StringTextComponent(TextFormatting.YELLOW +
-                "Tu inventario estaba lleno, el ítem fue soltado en el suelo."), target.getUUID());
-        }
-
-        String successMessage = TextFormatting.GREEN + "¡Raid oscura legendaria entregada a " +
-            TextFormatting.AQUA + target.getName().getString() +
-            TextFormatting.GREEN + "! Pokémon: " +
-            TextFormatting.RED + speciesName;
-
-        source.sendSuccess(new StringTextComponent(successMessage), true);
-
-        target.sendMessage(new StringTextComponent(
-            TextFormatting.GREEN + "¡Has recibido una raid oscura legendaria de " +
-            TextFormatting.RED + speciesName +
-            TextFormatting.GREEN + "!"), target.getUUID());
-
-        return 1;
+        // Elegir uno al azar
+        RegistryValue<Species> rv = allLegendariesRV.get(new Random().nextInt(allLegendariesRV.size()));
+        Species species = rv.get();
+        return giveRaidItem(src, target, species.getName(), "shadow");
     }
 
-    private int giveSpecificShadowRaid(CommandSource source, ServerPlayerEntity target, String speciesName) {
-        Species speciesValue = Species.get(speciesName.toLowerCase());
-        if (speciesValue == null) {
-            source.sendFailure(new StringTextComponent(TextFormatting.RED + "¡Pokémon no válido: " + speciesName));
+    private int giveSpecificShadowRaid(CommandSource src, ServerPlayerEntity target, String speciesNameLower) {
+        RegistryValue<Species> rv = PixelmonSpecies.fromName(speciesNameLower.toLowerCase());
+        if (rv == null || !rv.isRegistered()) {
+            src.sendFailure(new StringTextComponent(TextFormatting.RED +
+                "¡Pokémon no válido: " + speciesNameLower));
             return 0;
         }
 
-        String formName = "shadow";
+        Species species = rv.get();
+        return giveRaidItem(src, target, species.getName(), "shadow");
+    }
 
-        ItemStack raidItem = createShadowRaidItem(speciesValue.getName(), formName);
+    private int giveRaidItem(CommandSource src, ServerPlayerEntity target,
+                             String speciesName, String form) {
+        ItemStack flute = createShadowRaidItem(speciesName, form);
 
-        if (!target.inventory.add(raidItem)) {
-            target.drop(raidItem, false);
+        if (!target.inventory.add(flute)) {
+            target.drop(flute, false);
             target.sendMessage(new StringTextComponent(TextFormatting.YELLOW +
-                "Tu inventario estaba lleno, el ítem fue soltado en el suelo."), target.getUUID());
+                "¡Tu inventario estaba lleno! El ítem se soltó en el suelo."), target.getUUID());
         }
 
-        String successMessage = TextFormatting.GREEN + "¡Raid oscura legendaria de " +
-            TextFormatting.RED + speciesValue.getName() +
-            TextFormatting.GREEN + " entregada a " +
-            TextFormatting.AQUA + target.getName().getString() + "!";
+        // Mensaje al operador
+        src.sendSuccess(new StringTextComponent(TextFormatting.GREEN +
+            "¡Flauta de raid oscura entregada a " +
+            TextFormatting.AQUA + target.getName().getString() +
+            TextFormatting.GREEN + "! Pokémon: " +
+            TextFormatting.RED + speciesName), true);
 
-        source.sendSuccess(new StringTextComponent(successMessage), true);
-
-        target.sendMessage(new StringTextComponent(
-            TextFormatting.GREEN + "¡Has recibido una raid oscura legendaria de " +
-            TextFormatting.RED + speciesValue.getName() +
+        // Mensaje al receptor
+        target.sendMessage(new StringTextComponent(TextFormatting.GREEN +
+            "¡Has recibido una flauta de raid oscura de " +
+            TextFormatting.RED + speciesName +
             TextFormatting.GREEN + "!"), target.getUUID());
 
         return 1;
@@ -115,20 +107,23 @@ public class GiveRaidShadowCommand {
         ItemStack flute = new ItemStack(PixelmonItems.poke_flute.getItem());
         CompoundNBT nbt = flute.getOrCreateTag();
 
+        // Etiquetas personalizadas
         nbt.putBoolean("clovergoshadowwishingpiece", true);
         nbt.putString("clovergoshadowspecies", species);
         nbt.putString("clovergoshadowform", form);
 
-        CompoundNBT displayTag = new CompoundNBT();
-        displayTag.putString("Name", "{\"text\":\"Flauta de Raid Legendaria Oscura\",\"color\":\"red\",\"italic\":false}");
+        // Nombre y lore
+        CompoundNBT display = new CompoundNBT();
+        display.putString("Name",
+            "{\"text\":\"Flauta de Raid Legendaria Oscura\",\"color\":\"red\",\"italic\":false}");
 
         ListNBT lore = new ListNBT();
-        lore.add(StringNBT.valueOf("{\"text\":\"Usa para iniciar una raid legendaria oscura\",\"italic\":false,\"color\":\"gray\"}"));
-        lore.add(StringNBT.valueOf("{\"text\":\"Pokémon: " + species + "\",\"italic\":false,\"color\":\"red\"}"));
-        lore.add(StringNBT.valueOf("{\"text\":\"Forma: " + form + "\",\"italic\":false,\"color\":\"red\"}"));
+        lore.add(StringNBT.valueOf("{\"text\":\"Usa para iniciar una raid legendaria oscura\",\"color\":\"gray\",\"italic\":false}"));
+        lore.add(StringNBT.valueOf("{\"text\":\"Pokémon: " + species + "\",\"color\":\"red\",\"italic\":false}"));
+        lore.add(StringNBT.valueOf("{\"text\":\"Forma: " + form + "\",\"color\":\"red\",\"italic\":false}"));
 
-        displayTag.put("Lore", lore);
-        nbt.put("display", displayTag);
+        display.put("Lore", lore);
+        nbt.put("display", display);
 
         return flute;
     }
