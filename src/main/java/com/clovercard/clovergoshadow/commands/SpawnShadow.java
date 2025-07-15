@@ -10,7 +10,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.pixelmonmod.api.pokemon.PokemonSpecification;
 import com.pixelmonmod.api.pokemon.PokemonSpecificationProxy;
 import com.pixelmonmod.pixelmon.api.pokemon.Pokemon;
-import com.pixelmonmod.pixelmon.api.pokemon.PokemonFactory;               // <-- import añadido
+import com.pixelmonmod.pixelmon.api.pokemon.PokemonFactory;
 import com.pixelmonmod.pixelmon.api.pokemon.ribbon.type.RibbonType;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
@@ -26,44 +26,46 @@ public class SpawnShadow {
                     .then(Commands.argument("input", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             CommandSource src = ctx.getSource();
-                            ServerPlayerEntity sender = src.getPlayerOrException();
+                            ServerPlayerEntity sender = src.getEntity() instanceof ServerPlayerEntity
+                                ? (ServerPlayerEntity) src.getEntity()
+                                : null;
+
                             String raw = StringArgumentType.getString(ctx, "input");
                             String[] parts = raw.trim().split("\\s+");
 
                             ServerPlayerEntity target = null;
-                            double x, y, z;
+                            double x = 0, y = 0, z = 0;
                             int idx = 0;
+                            boolean coordsProvided = false;
 
                             // 1) ¿Primer token es jugador online?
                             if (parts.length > 0) {
-                                target = sender.getServer()
-                                               .getPlayerList()
-                                               .getPlayerByName(parts[0]);
+                                target = (sender != null
+                                    ? sender.getServer().getPlayerList()
+                                    : src.getServer().getPlayerList())
+                                    .getPlayerByName(parts[0]);
                             }
                             if (target != null) {
                                 x = target.getX();
                                 y = target.getY();
                                 z = target.getZ();
                                 idx = 1;
-                            } else {
+                            } else if (parts.length >= 4) {
                                 // 2) ¿Primeros 3 tokens son doubles?
-                                if (parts.length >= 4) {
-                                    try {
-                                        x = Double.parseDouble(parts[0]);
-                                        y = Double.parseDouble(parts[1]);
-                                        z = Double.parseDouble(parts[2]);
-                                        idx = 3;
-                                    } catch (NumberFormatException e) {
-                                        x = sender.getX();
-                                        y = sender.getY();
-                                        z = sender.getZ();
-                                    }
-                                } else {
-                                    x = sender.getX();
-                                    y = sender.getY();
-                                    z = sender.getZ();
+                                try {
+                                    x = Double.parseDouble(parts[0]);
+                                    y = Double.parseDouble(parts[1]);
+                                    z = Double.parseDouble(parts[2]);
+                                    idx = 3;
+                                    coordsProvided = true;
+                                } catch (NumberFormatException ignored) {
                                 }
-                                target = sender;
+                            }
+
+                            // 3) Desde consola sin jugador y sin coords => error
+                            if (sender == null && target == null && !coordsProvided) {
+                                sendError(src, "Debes indicar <jugador> o coordenadas válidas.");
+                                return 1;
                             }
 
                             // 4) Construir specs
@@ -75,7 +77,7 @@ public class SpawnShadow {
                             String specs = sb.toString().trim();
                             if (specs.isEmpty()) specs = "random";
 
-                            return spawn(src, target, x, y, z, specs);
+                            return spawn(src, target, coordsProvided, x, y, z, specs);
                         })
                     )
                 )
@@ -84,61 +86,66 @@ public class SpawnShadow {
 
     private int spawn(CommandSource src,
                       ServerPlayerEntity target,
+                      boolean coordsProvided,
                       double x, double y, double z,
                       String specs) throws CommandSyntaxException {
-        // 1) Crear spec
+        // 1) Si no hay target y no son coords => error
+        if (target == null && !coordsProvided) {
+            sendError(src, "No hay jugador objetivo.");
+            return 1;
+        }
+
+        // 2) Crear spec
         PokemonSpecification spec = PokemonSpecificationProxy.create(specs);
         if (spec == null) {
-            sendError(src, "clovergoshadow.spawnshadow.error1",
-                      "No se pudo interpretar la especificación: " + specs);
+            sendError(src, "Especificación inválida: " + specs);
             return 1;
         }
 
-        // 2) Crear Pokémon
+        // 3) Crear Pokémon
         Pokemon pkm = PokemonFactory.create(spec);
         if (pkm == null) {
-            sendError(src, "clovergoshadow.spawnshadow.error2",
-                      "Pokémon no encontrado: " + specs);
+            sendError(src, "Pokémon no encontrado: " + specs);
             return 1;
         }
 
-        // 3) Ribbon Shadow
+        // 4) Ribbon Shadow
         RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         if (ribbon == null) {
-            sendError(src, "clovergoshadow.spawnshadow.error3",
-                      "Cinta Sombrío no encontrada.");
+            sendError(src, "Cinta de Pokémon Oscuro no encontrada.");
             return 1;
         }
 
-        // 4) Aplicar ribbon y spawnear
+        // 5) Aplicar ribbon y spawnear
         pkm.addRibbon(ribbon);
-        pkm.getOrSpawnPixelmon(
-            target.getCommandSenderWorld(),
-            x, y + 1, z
-        );
+        // Elegimos el mundo apropiado: si coordsProvided, world de la fuente; else world del target
+        if (coordsProvided) {
+            pkm.getOrSpawnPixelmon(src.getLevel(), x, y + 1, z);
+        } else {
+            pkm.getOrSpawnPixelmon(target.getCommandSenderWorld(), x, y + 1, z);
+        }
 
-        // 5) Mensaje de éxito
+        // 6) Mensaje de éxito
         sendSuccess(src, pkm, x, y, z);
         return 0;
     }
 
-    private void sendError(CommandSource src, String key, String fallback) {
-        IFormattableTextComponent msg = Config.CONFIG.isUseTranslatables()
-            ? new TranslationTextComponent(key)
-            : new StringTextComponent(fallback);
-        src.sendFailure(msg);
+    private void sendError(CommandSource src, String msg) {
+        IFormattableTextComponent error = new StringTextComponent("✖ ")
+            .withStyle(Style.EMPTY.withColor(TextFormatting.RED))
+            .append(new StringTextComponent(msg)
+            .withStyle(Style.EMPTY.withColor(TextFormatting.WHITE)));
+        src.sendFailure(error);
     }
 
     private void sendSuccess(CommandSource src, Pokemon pkm, double x, double y, double z) {
-        IFormattableTextComponent msg = new StringTextComponent("")
-            .append(new StringTextComponent("✔ ").withStyle(Style.EMPTY.withColor(TextFormatting.GREEN)))
-            .append(new StringTextComponent("Spawned "))
-            // Aquí usamos directamente el componente traducido del Pokémon
+        IFormattableTextComponent success = new StringTextComponent("✔ ")
+            .withStyle(Style.EMPTY.withColor(TextFormatting.GREEN))
             .append(pkm.getTranslatedName().withStyle(Style.EMPTY.withColor(TextFormatting.YELLOW)))
             .append(new StringTextComponent(
-                String.format(" at (%.2f, %.2f, %.2f)", x, y, z))
+                String.format(" ha aparecido en (%.2f, %.2f, %.2f)", x, y, z))
                 .withStyle(Style.EMPTY.withColor(TextFormatting.AQUA))
             );
-        src.sendSuccess(msg, false);
+        src.sendSuccess(success, false);
     }
 }
