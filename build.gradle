@@ -27,21 +27,19 @@ repositories {
         name = 'sponge'
         url = 'https://repo.spongepowered.org/maven'
     }
-    ivy {
-        setUrl('https://download.nodecdn.net/containers/reforged/server/release')
-        metadataSources {
-            artifact()
-        }
-        patternLayout {
-            artifact('[revision]/[artifact].[ext]')
-        }
+    flatDir {
+        dirs 'libs' // Añade esta línea para buscar dependencias en la carpeta libs
     }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.39'
-
-    implementation fg.deobf('pixelmon:Pixelmon-1.16.5-9.1.9-server:9.1.9')
+    
+    // Dependencia local de Pixelmon
+    implementation fg.deobf(files("libs/Pixelmon-1.16.5-9.1.12.jar"))
+    
+    // Si necesitas incluir otros archivos JAR de la carpeta libs:
+    // implementation fg.deobf(files("libs/otro-mod.jar"))
 }
 
 tasks.withType(JavaCompile) {
@@ -53,8 +51,6 @@ shadowJar {
     archiveName = rootProject.name + '-Forge.jar'
     dependsOn('reobfJar')
 
-    // Where you relocate any shaded dependencies
-
     exclude 'net.minecraft'
     exclude "**/module-info.class"
 }
@@ -63,7 +59,7 @@ reobf {
     shadowJar {}
 }
 
-task versionedRelease(type: Copy) { // This creates a jar with a version number appended to the end in the `release` directory (for ease of use)
+task versionedRelease(type: Copy) {
     delete fileTree('release/') {
         include '**/*.jar'
     }

@@ -12,10 +12,13 @@ import com.pixelmonmod.api.pokemon.PokemonSpecificationProxy;
 import com.pixelmonmod.pixelmon.api.pokemon.Pokemon;
 import com.pixelmonmod.pixelmon.api.pokemon.PokemonFactory;
 import com.pixelmonmod.pixelmon.api.pokemon.ribbon.type.RibbonType;
+import com.pixelmonmod.pixelmon.entities.pixelmon.PixelmonEntity;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.*;
+import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 
 public class SpawnShadow {
     public SpawnShadow(CommandDispatcher<CommandSource> dispatcher) {
@@ -26,7 +29,7 @@ public class SpawnShadow {
                     .then(Commands.argument("input", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             CommandSource src = ctx.getSource();
-                            ServerPlayerEntity sender = src.getEntity() instanceof ServerPlayerEntity
+                            ServerPlayerEntity sender = (src.getEntity() instanceof ServerPlayerEntity)
                                 ? (ServerPlayerEntity) src.getEntity()
                                 : null;
 
@@ -40,7 +43,7 @@ public class SpawnShadow {
 
                             // 1) ¿Primer token es jugador online?
                             if (parts.length > 0) {
-                                target = (sender != null
+                                target = ((sender != null)
                                     ? sender.getServer().getPlayerList()
                                     : src.getServer().getPlayerList())
                                     .getPlayerByName(parts[0]);
@@ -116,16 +119,24 @@ public class SpawnShadow {
             return 1;
         }
 
-        // 5) Aplicar ribbon y spawnear
+        // 5) Aplicar ribbon
         pkm.addRibbon(ribbon);
-        // Elegimos el mundo apropiado: si coordsProvided, world de la fuente; else world del target
-        if (coordsProvided) {
-            pkm.getOrSpawnPixelmon(src.getLevel(), x, y + 1, z);
-        } else {
-            pkm.getOrSpawnPixelmon(target.getCommandSenderWorld(), x, y + 1, z);
+
+        // 6) Determinar el mundo y spawnear en World
+        World lvl = coordsProvided
+            ? src.getLevel()
+            : target.getCommandSenderWorld();
+        pkm.getOrSpawnPixelmon(lvl, x, y + 1, z);
+
+        // 7) MARCAR spawnTime en NBT
+        PixelmonEntity spawned = (PixelmonEntity) pkm.getOrCreatePixelmon();
+        if (lvl instanceof ServerWorld) {
+            ServerWorld sw = (ServerWorld) lvl;
+            long tick = sw.getGameTime();
+            spawned.getPersistentData().putLong("clovergoshadow:spawnTime", tick);
         }
 
-        // 6) Mensaje de éxito
+        // 8) Mensaje de éxito
         sendSuccess(src, pkm, x, y, z);
         return 0;
     }
@@ -134,7 +145,7 @@ public class SpawnShadow {
         IFormattableTextComponent error = new StringTextComponent("✖ ")
             .withStyle(Style.EMPTY.withColor(TextFormatting.RED))
             .append(new StringTextComponent(msg)
-            .withStyle(Style.EMPTY.withColor(TextFormatting.WHITE)));
+                .withStyle(Style.EMPTY.withColor(TextFormatting.WHITE)));
         src.sendFailure(error);
     }
 
