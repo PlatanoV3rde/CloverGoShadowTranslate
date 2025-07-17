@@ -3,10 +3,9 @@ package com.clovercard.clovergoshadow.listeners;
 
 import com.clovercard.clovergoshadow.enums.RibbonEnum;
 import com.clovercard.clovergoshadow.helpers.RibbonHelper;
-import com.pixelmonmod.pixelmon.api.pokemon.ribbon.type.RibbonType;
 import com.pixelmonmod.pixelmon.entities.pixelmon.PixelmonEntity;
+import com.pixelmonmod.pixelmon.api.pokemon.ribbon.type.RibbonType;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -15,71 +14,78 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Mod.EventBusSubscriber(modid = "clovergoshadow")
 public class ShadowLifetimeHandler {
-    private static final int TICKS_PER_SECOND = 20;
-    private static final int DEFAULT_LIFETIME_MINUTES = 5;
-    private static final long MAX_LIFETIME_TICKS =
-        DEFAULT_LIFETIME_MINUTES * 60L * TICKS_PER_SECOND;
+    private static final int    TICKS_PER_SECOND     = 20;
+    private static final int    DEFAULT_LIFETIME_MIN = 5;
+    private static final long   MAX_LIFETIME_TICKS   = DEFAULT_LIFETIME_MIN * 60L * TICKS_PER_SECOND;
 
-    private static final Map<UUID, Long> shadowPokemonTracker = new ConcurrentHashMap<>();
+    /** 
+     * Guardamos directamente la entidad junto al tick global de spawn.
+     * Esto evita buscar por UUID o iterar mundos completos.
+     */
+    private static final Map<PixelmonEntity, Long> tracker = new ConcurrentHashMap<>();
 
-    /** Registra Pokémon sombra cuando aparecen */
+    /** 
+     * Al unirse cualquier Pixelmon al mundo, si lleva el ribbon Shadow lo trackeamos.
+     */
     @SubscribeEvent
-    public static void onEntityJoin(EntityJoinWorldEvent event) {
-        if (!(event.getEntity() instanceof PixelmonEntity)) {
+    public static void onEntityJoin(EntityJoinWorldEvent evt) {
+        if (!(evt.getEntity() instanceof PixelmonEntity)) {
             return;
         }
-        PixelmonEntity pixelmon = (PixelmonEntity) event.getEntity();
+        PixelmonEntity pkm = (PixelmonEntity) evt.getEntity();
 
         RibbonType shadowRibbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
         if (shadowRibbon == null) {
             return;
         }
-
-        if (pixelmon.getPokemon().hasRibbon(shadowRibbon)) {
-            shadowPokemonTracker.put(
-                pixelmon.getUUID(),
-                event.getWorld().getGameTime()
-            );
+        if (!pkm.getPokemon().hasRibbon(shadowRibbon)) {
+            return;
         }
+
+        // Tomamos el tick global del servidor
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        long now = server.getTickCount();
+        tracker.put(pkm, now);
     }
 
-    /** Verifica y elimina Pokémon sombra que han excedido su tiempo de vida */
+    /**
+     * Una vez por segundo (cada 20 ticks) limpiamos el tracker
+     * y despawneamos los PixelmonShadow que superen su tiempo de vida.
+     */
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public static void onServerTick(TickEvent.ServerTickEvent evt) {
+        if (evt.phase != TickEvent.Phase.END) {
             return;
         }
 
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        long currentTime = server.getAllLevels().iterator().next().getGameTime();
+        long now = server.getTickCount();
 
-        Iterator<Map.Entry<UUID, Long>> iter = shadowPokemonTracker.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<UUID, Long> entry = iter.next();
-            UUID uuid = entry.getKey();
-            long spawnTick = entry.getValue();
+        // Ejecutamos solo cada segundo
+        if (now % TICKS_PER_SECOND != 0) {
+            return;
+        }
 
-            PixelmonEntity found = null;
-            for (ServerWorld world : server.getAllLevels()) {
-                if (world.getEntity(uuid) instanceof PixelmonEntity) {
-                    found = (PixelmonEntity) world.getEntity(uuid);
-                    break;
-                }
-            }
+        Iterator<Map.Entry<PixelmonEntity, Long>> it = tracker.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<PixelmonEntity, Long> entry = it.next();
+            PixelmonEntity pkm     = entry.getKey();
+            long           spawnT  = entry.getValue();
 
-            if (found == null || !found.isAlive()) {
-                iter.remove();
+            // Si ya murió o no existe, simplemente eliminamos el tracking
+            if (!pkm.isAlive()) {
+                it.remove();
                 continue;
             }
 
-            if (currentTime - spawnTick >= MAX_LIFETIME_TICKS) {
-                found.remove();
-                iter.remove();
+            // Si superó los 5 minutos, lo despawneamos y limpiamos el tracking
+            if (now - spawnT >= MAX_LIFETIME_TICKS) {
+                pkm.remove();
+                it.remove();
             }
         }
     }

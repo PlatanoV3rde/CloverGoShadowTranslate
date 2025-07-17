@@ -1,3 +1,4 @@
+// src/main/java/com/clovercard/clovergoshadow/helpers/ExpHelper.java
 package com.clovercard.clovergoshadow.helpers;
 
 import com.clovercard.clovergoshadow.config.Config;
@@ -8,185 +9,142 @@ import net.minecraft.scoreboard.ScoreCriteria;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.util.Util;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 public class ExpHelper {
-    public static int getLevelExp(int level){
+
+    private static final int MAX_LEVEL = 50;
+
+    /** Cuánta EXP hace falta para subir del nivel dado */
+    public static int getLevelExp(int level) {
         return (level * Config.CONFIG.getExpDifPerLevel()) + Config.CONFIG.getBaseExp();
     }
 
+    /** Añade EXP y maneja subida de nivel, con mensaje centrado */
     public static void addExpToPlayer(ServerPlayerEntity player, int amount) {
-        if(player == null) return;
-        ServerScoreboard scoreboard = ServerLifecycleHooks.getCurrentServer().getScoreboard();
-        ScoreObjective levelObj = scoreboard.getObjective("clshadowlevels");
-        ScoreObjective expObj = scoreboard.getObjective("clshadowexp");
+        if (player == null) return;
+        ServerScoreboard sb = ServerLifecycleHooks.getCurrentServer().getScoreboard();
+        ScoreObjective lvlObj = sb.getObjective("clshadowlevels");
+        ScoreObjective expObj = sb.getObjective("clshadowexp");
 
-        if (levelObj == null) {
-            scoreboard.addObjective("clshadowlevels", ScoreCriteria.DUMMY, new StringTextComponent("researchlevel"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            levelObj = scoreboard.getObjective("clshadowlevels");
+        if (lvlObj == null) {
+            sb.addObjective("clshadowlevels", ScoreCriteria.DUMMY,
+                new StringTextComponent("researchlevel"), ScoreCriteria.DUMMY.getDefaultRenderType());
+            lvlObj = sb.getObjective("clshadowlevels");
         }
         if (expObj == null) {
-            scoreboard.addObjective("clshadowexp", ScoreCriteria.DUMMY, new StringTextComponent("researchexp"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            expObj = scoreboard.getObjective("clshadowexp");
+            sb.addObjective("clshadowexp", ScoreCriteria.DUMMY,
+                new StringTextComponent("researchexp"), ScoreCriteria.DUMMY.getDefaultRenderType());
+            expObj = sb.getObjective("clshadowexp");
         }
-        if(levelObj == null || expObj == null) return;
+        if (lvlObj == null || expObj == null) return;
 
-        Score plLevel = scoreboard.getOrCreatePlayerScore(player.getName().getString(), levelObj);
-        Score plExp = scoreboard.getOrCreatePlayerScore(player.getName().getString(), expObj);
-        int required = getLevelExp(plLevel.getScore());
+        Score plLvl = sb.getOrCreatePlayerScore(player.getName().getString(), lvlObj);
+        Score plExp = sb.getOrCreatePlayerScore(player.getName().getString(), expObj);
+
+        // 1) Dar EXP
         plExp.setScore(plExp.getScore() + amount);
+        IFormattableTextComponent gainMsg = Config.CONFIG.isUseTranslatables()
+            ? new TranslationTextComponent("clovergoshadow.expgain", amount)
+            : new StringTextComponent("§a¡Has ganado §e" + amount + " §aexp!");
+        player.sendMessage(gainMsg, Util.NIL_UUID);
 
-        IFormattableTextComponent msg;
-        if(Config.CONFIG.isUseTranslatables()) {
-            msg = new TranslationTextComponent("clovergoshadow.expgain", amount);
-        } else {
-            msg = new StringTextComponent(TextFormatting.GREEN + "¡Has ganado " +
-                TextFormatting.YELLOW + amount + TextFormatting.GREEN + " exp!");
-        }
-        player.sendMessage(msg, Util.NIL_UUID);
-
-        while(plExp.getScore() > required) {
+        // 2) Bucle de subida de nivel y recompensas
+        int required = getLevelExp(plLvl.getScore());
+        while (plExp.getScore() >= required) {
             plExp.setScore(plExp.getScore() - required);
-            if(plLevel.getScore() < 50) {
-                plLevel.setScore(plLevel.getScore() + 1);
-                if(plLevel.getScore() != 0 && plLevel.getScore() % 10 == 0) {
-                    ItemStack spawner = ItemHelper.makeLegendSpawner();
-                    if(spawner != null) {
-                        ServerPlayerEntity pl = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player.getUUID());
-                        if (pl != null) pl.inventory.add(spawner);
-                    }
-                }
+
+            int nextLevel = plLvl.getScore() + 1;
+            if (nextLevel > MAX_LEVEL) {
+                plLvl.setScore(0);
             } else {
-                plLevel.setScore(0);
+                plLvl.setScore(nextLevel);
+            }
+
+            // Recompensa cada 10 niveles
+            if (nextLevel % 10 == 0) {
                 ItemStack spawner = ItemHelper.makeLegendSpawner();
-                if(spawner != null) {
-                    ServerPlayerEntity pl = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player.getUUID());
-                    if (pl != null) pl.inventory.add(spawner);
+                if (spawner != null) {
+                    player.inventory.add(spawner);
                 }
             }
-            required = getLevelExp(plLevel.getScore());
 
-            IFormattableTextComponent levelMsg;
-            if(Config.CONFIG.isUseTranslatables()) {
-                levelMsg = new TranslationTextComponent("clovergoshadow.levelgain", plLevel.getScore());
-            } else {
-                levelMsg = new StringTextComponent(TextFormatting.AQUA + "¡Tu nivel de investigación ha subido a " +
-                    TextFormatting.GOLD + plLevel.getScore() + TextFormatting.AQUA + "!");
-            }
-            player.sendMessage(levelMsg, Util.NIL_UUID);
+            required = getLevelExp(plLvl.getScore());
+
+            // 3) Mensaje de nivel alcanzado, centrado y con colores solicitados
+            String header = "§r\n"
+                + "§b§lᴀꜱᴄᴇɴᴅᴇʀꜱᴍᴄ §7|§6§l ᴘɪxᴇʟᴍᴏɴ\n"
+                + "§r";
+            String body = ""
+                + "§f¡ɴᴜᴇᴠᴏ ɴɪᴠᴇʟ ᴅᴇ ɪɴᴠᴇꜱᴛɪɢᴀᴅᴏʀ ᴀʟᴄᴀɴᴢᴀᴅᴏ!\n"
+                + "§fɴɪᴠᴇʟ: §a" + nextLevel + "§7/§c" + MAX_LEVEL + "\n"
+                + "§r";
+            ChatHelper.sendCentered(player, header + body);
         }
     }
 
+    /** Añade niveles directos y resetea EXP, con mensaje centrado */
     public static void addLevelToPlayer(ServerPlayerEntity player, int amount) {
-        if(player == null) return;
-        ServerScoreboard scoreboard = ServerLifecycleHooks.getCurrentServer().getScoreboard();
-        ScoreObjective levelObj = scoreboard.getObjective("clshadowlevels");
-        ScoreObjective expObj = scoreboard.getObjective("clshadowexp");
+        if (player == null) return;
+        ServerScoreboard sb = ServerLifecycleHooks.getCurrentServer().getScoreboard();
+        ScoreObjective lvlObj = sb.getObjective("clshadowlevels");
+        ScoreObjective expObj = sb.getObjective("clshadowexp");
+        if (lvlObj == null || expObj == null) return;
 
-        if (levelObj == null) {
-            scoreboard.addObjective("clshadowlevels", ScoreCriteria.DUMMY, new StringTextComponent("researchlevel"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            levelObj = scoreboard.getObjective("clshadowlevels");
-        }
-        if (expObj == null) {
-            scoreboard.addObjective("clshadowexp", ScoreCriteria.DUMMY, new StringTextComponent("researchexp"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            expObj = scoreboard.getObjective("clshadowexp");
-        }
-        if(levelObj == null || expObj == null) return;
+        Score plLvl = sb.getOrCreatePlayerScore(player.getName().getString(), lvlObj);
+        plLvl.setScore(Math.min(plLvl.getScore() + amount, MAX_LEVEL));
+        sb.getOrCreatePlayerScore(player.getName().getString(), expObj).setScore(0);
 
-        Score plLevel = scoreboard.getOrCreatePlayerScore(player.getName().getString(), levelObj);
-        Score plExp = scoreboard.getOrCreatePlayerScore(player.getName().getString(), expObj);
-        int rewards = ((plLevel.getScore() + amount) % 10) - (plLevel.getScore() % 10);
+        int newLevel = plLvl.getScore();
 
-        if(plLevel.getScore() + amount > 50) {
-            plExp.setScore(0);
-            plLevel.setScore(plLevel.getScore() + amount - 50);
-        } else {
-            plExp.setScore(0);
-            plLevel.setScore(plLevel.getScore() + amount);
-        }
-
-        while(rewards > 0) {
-            ItemStack spawner = ItemHelper.makeLegendSpawner();
-            if(spawner != null) {
-                ServerPlayerEntity pl = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player.getUUID());
-                if (pl != null) pl.inventory.add(spawner);
-            }
-            rewards--;
-        }
-
-        IFormattableTextComponent msg;
-        if(Config.CONFIG.isUseTranslatables()) {
-            msg = new TranslationTextComponent("clovergoshadow.levelgain", amount);
-        } else {
-            msg = new StringTextComponent(TextFormatting.AQUA + "¡Tu nivel de investigación ha aumentado en " +
-                TextFormatting.GOLD + amount + TextFormatting.AQUA + "!");
-        }
-        player.sendMessage(msg, Util.NIL_UUID);
+        String header = "§r\n"
+            + "§b§lᴀꜱᴄᴇɴᴅᴇʀꜱᴍᴄ §7|§6§l ᴘɪxᴇʟᴍᴏɴ\n"
+            + "§r";
+        String body = ""
+            + "§cᴛᴜ ɴɪᴠᴇʟ ᴅᴇ ɪɴᴠᴇꜱᴛɪɢᴀᴅᴏʀ ʜᴀ ꜱɪᴅᴏ ꜰɪᴊᴀᴅᴏ ᴇɴ:\n"
+            + "§fɴɪᴠᴇʟ: §a" + newLevel + "§7/§c" + MAX_LEVEL + "\n"
+            + "§r";
+        ChatHelper.sendCentered(player, header + body);
     }
 
+    /** Fija la EXP al valor indicado (mensaje simple) */
     public static void setExpForPlayer(ServerPlayerEntity player, int amount) {
         if (player == null) return;
-        ServerScoreboard scoreboard = ServerLifecycleHooks.getCurrentServer().getScoreboard();
-        ScoreObjective levelObj = scoreboard.getObjective("clshadowlevels");
-        ScoreObjective expObj = scoreboard.getObjective("clshadowexp");
+        ServerScoreboard sb = ServerLifecycleHooks.getCurrentServer().getScoreboard();
+        ScoreObjective expObj = sb.getObjective("clshadowexp");
+        if (expObj == null) return;
 
-        if (levelObj == null) {
-            scoreboard.addObjective("clshadowlevels", ScoreCriteria.DUMMY, new StringTextComponent("researchlevel"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            levelObj = scoreboard.getObjective("clshadowlevels");
-        }
-        if (expObj == null) {
-            scoreboard.addObjective("clshadowexp", ScoreCriteria.DUMMY, new StringTextComponent("researchexp"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            expObj = scoreboard.getObjective("clshadowexp");
-        }
-        if (levelObj == null || expObj == null) return;
-
-        Score plLevel = scoreboard.getOrCreatePlayerScore(player.getName().getString(), levelObj);
-        Score plExp = scoreboard.getOrCreatePlayerScore(player.getName().getString(), expObj);
-        plExp.setScore(amount);
-
-        IFormattableTextComponent msg;
-        if (Config.CONFIG.isUseTranslatables()) {
-            msg = new TranslationTextComponent("clovergoshadow.expset", amount);
-        } else {
-            msg = new StringTextComponent(TextFormatting.LIGHT_PURPLE + "¡Tu experiencia ha sido fijada en " +
-                TextFormatting.YELLOW + amount + TextFormatting.LIGHT_PURPLE + "!");
-        }
+        sb.getOrCreatePlayerScore(player.getName().getString(), expObj).setScore(amount);
+        IFormattableTextComponent msg = Config.CONFIG.isUseTranslatables()
+            ? new TranslationTextComponent("clovergoshadow.expset", amount)
+            : new StringTextComponent("§d¡Tu experiencia ha sido fijada en §e" + amount + "§d!");
         player.sendMessage(msg, Util.NIL_UUID);
     }
 
+    /** Fija el nivel al valor indicado y resetea EXP, con mensaje centrado */
     public static void setLevelForPlayer(ServerPlayerEntity player, int amount) {
-        if(player == null) return;
-        ServerScoreboard scoreboard = ServerLifecycleHooks.getCurrentServer().getScoreboard();
-        ScoreObjective levelObj = scoreboard.getObjective("clshadowlevels");
-        ScoreObjective expObj = scoreboard.getObjective("clshadowexp");
+        if (player == null) return;
+        ServerScoreboard sb = ServerLifecycleHooks.getCurrentServer().getScoreboard();
+        ScoreObjective lvlObj = sb.getObjective("clshadowlevels");
+        ScoreObjective expObj = sb.getObjective("clshadowexp");
+        if (lvlObj == null || expObj == null) return;
 
-        if (levelObj == null) {
-            scoreboard.addObjective("clshadowlevels", ScoreCriteria.DUMMY, new StringTextComponent("researchlevel"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            levelObj = scoreboard.getObjective("clshadowlevels");
-        }
-        if (expObj == null) {
-            scoreboard.addObjective("clshadowexp", ScoreCriteria.DUMMY, new StringTextComponent("researchexp"), ScoreCriteria.DUMMY.getDefaultRenderType());
-            expObj = scoreboard.getObjective("clshadowexp");
-        }
-        if(levelObj == null || expObj == null) return;
+        Score plLvl = sb.getOrCreatePlayerScore(player.getName().getString(), lvlObj);
+        plLvl.setScore(Math.min(amount, MAX_LEVEL));
+        sb.getOrCreatePlayerScore(player.getName().getString(), expObj).setScore(0);
 
-        Score plLevel = scoreboard.getOrCreatePlayerScore(player.getName().getString(), levelObj);
-        Score plExp = scoreboard.getOrCreatePlayerScore(player.getName().getString(), expObj);
-        if(amount > 50) amount = 50;
-        plLevel.setScore(amount);
-        plExp.setScore(0);
+        int newLevel = plLvl.getScore();
 
-        IFormattableTextComponent msg;
-        if(Config.CONFIG.isUseTranslatables()) {
-            msg = new TranslationTextComponent("clovergoshadow.levelset", amount);
-        } else {
-            msg = new StringTextComponent(TextFormatting.LIGHT_PURPLE + "¡Tu nivel de investigación ha sido fijado en " +
-                TextFormatting.GOLD + amount + TextFormatting.LIGHT_PURPLE + "!");
-        }
-        player.sendMessage(msg, Util.NIL_UUID);
+        String header = "§r\n"
+            + "§b§lᴀꜱᴄᴇɴᴅᴇʀꜱᴍᴄ §7|§6§l ᴘɪxᴇʟᴍᴏɴ\n"
+            + "§r";
+        String body = ""
+            + "§cᴛᴜ ɴɪᴠᴇʟ ᴅᴇ ɪɴᴠᴇꜱᴛɪɢᴀᴅᴏʀ ʜᴀ ꜱɪᴅᴏ ꜰɪᴊᴀᴅᴏ ᴇɴ:\n"
+            + "§fɴɪᴠᴇʟ: §a" + newLevel + "§7/§c" + MAX_LEVEL + "\n"
+            + "§r";
+        ChatHelper.sendCentered(player, header + body);
     }
 }

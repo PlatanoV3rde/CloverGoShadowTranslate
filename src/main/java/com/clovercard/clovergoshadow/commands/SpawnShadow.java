@@ -1,7 +1,6 @@
 // src/main/java/com/clovercard/clovergoshadow/commands/SpawnShadow.java
 package com.clovercard.clovergoshadow.commands;
 
-import com.clovercard.clovergoshadow.config.Config;
 import com.clovercard.clovergoshadow.enums.RibbonEnum;
 import com.clovercard.clovergoshadow.helpers.RibbonHelper;
 import com.mojang.brigadier.CommandDispatcher;
@@ -16,9 +15,9 @@ import com.pixelmonmod.pixelmon.entities.pixelmon.PixelmonEntity;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.*;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 
 public class SpawnShadow {
     public SpawnShadow(CommandDispatcher<CommandSource> dispatcher) {
@@ -122,19 +121,17 @@ public class SpawnShadow {
         // 5) Aplicar ribbon
         pkm.addRibbon(ribbon);
 
-        // 6) Determinar el mundo y spawnear en World
+        // 6) Determinar el mundo y spawnear
         World lvl = coordsProvided
             ? src.getLevel()
             : target.getCommandSenderWorld();
         pkm.getOrSpawnPixelmon(lvl, x, y + 1, z);
 
-        // 7) MARCAR spawnTime en NBT
+        // 7) MARCAR spawnTime usando el tickCount global del servidor
+        MinecraftServer server = src.getServer();
+        long tick = server.getTickCount();  // contador global de ticks
         PixelmonEntity spawned = (PixelmonEntity) pkm.getOrCreatePixelmon();
-        if (lvl instanceof ServerWorld) {
-            ServerWorld sw = (ServerWorld) lvl;
-            long tick = sw.getGameTime();
-            spawned.getPersistentData().putLong("clovergoshadow:spawnTime", tick);
-        }
+        spawned.getPersistentData().putLong("clovergoshadow:spawnTime", tick);
 
         // 8) Mensaje de éxito
         sendSuccess(src, pkm, x, y, z);
