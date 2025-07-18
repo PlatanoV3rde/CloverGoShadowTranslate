@@ -2,9 +2,8 @@
 package com.clovercard.clovergoshadow.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.pixelmonmod.pixelmon.api.pokemon.species.Species;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.pixelmonmod.pixelmon.api.registries.PixelmonItems;
-import com.pixelmonmod.pixelmon.api.registries.PixelmonSpecies;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -13,14 +12,17 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
-import net.minecraft.util.text.*;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
+/**
+ * Comando /clovergoshadow giveraidshadow <jugador> <pokemon>
+ * Ej: /clovergoshadow giveraidshadow PlatanoV3rde Arceus
+ */
 public class GiveRaidShadowCommand {
-    private static final Random RNG = new Random();
 
     public GiveRaidShadowCommand(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(
@@ -28,122 +30,70 @@ public class GiveRaidShadowCommand {
                 .requires(src -> src.hasPermission(2))
                 .then(Commands.literal("giveraidshadow")
                     .then(Commands.argument("target", EntityArgument.player())
+                    .then(Commands.argument("species", StringArgumentType.word())
                         .executes(ctx -> {
-                            ServerPlayerEntity target = EntityArgument.getPlayer(ctx, "target");
-                            return giveRandomLegendaryShadowRaid(ctx.getSource(), target);
+                            ServerPlayerEntity target =
+                                EntityArgument.getPlayer(ctx, "target");
+                            String rawSpecies =
+                                StringArgumentType.getString(ctx, "species");
+                            return giveRaidFlute(ctx.getSource(), target, rawSpecies);
                         })
-                    )
+                    ))
                 )
         );
     }
 
-    private int giveRandomLegendaryShadowRaid(CommandSource source, ServerPlayerEntity target) {
-        List<Species> legendaries = PixelmonSpecies.getAll().stream()
-            .filter(Species::isLegendary)
-            .collect(Collectors.toList());
+    private int giveRaidFlute(CommandSource src,
+                              ServerPlayerEntity target,
+                              String rawSpecies) {
+        // Normalizar a minúsculas
+        String speciesKey = rawSpecies.toLowerCase(Locale.ROOT);
 
-        if (legendaries.isEmpty()) {
-            source.sendFailure(createStyled("No se encontraron Pokémon legendarios registrados.", TextFormatting.RED));
-            return 0;
-        }
-
-        Species chosen = legendaries.get(RNG.nextInt(legendaries.size()));
-        String speciesName = chosen.getName();
-        String formName = "shadow";
-
-        ItemStack raidFlute = createShadowRaidItem(speciesName, formName);
-
-        if (!target.inventory.add(raidFlute)) {
-            target.drop(raidFlute, false);
-            target.sendMessage(createStyled(
-                "Inventario lleno. Se ha soltado la Flauta de Raid Legendaria Oscura.",
-                TextFormatting.YELLOW
-            ), target.getUUID());
-        }
-
-        // Mensaje al operador
-        IFormattableTextComponent opMsg = TextComponentUtils.concat(
-            createStyled("✔ ", TextFormatting.GREEN),
-            new StringTextComponent("Entrega completa: "),
-            createStyled(target.getName().getString(), TextFormatting.AQUA),
-            new StringTextComponent(" recibe "),
-            createStyled("Flauta de Raid Legendaria Oscura", TextFormatting.GOLD),
-            new StringTextComponent(" de "),
-            createStyled(speciesName, TextFormatting.RED),
-            new StringTextComponent(".")
-        );
-        source.sendSuccess(opMsg, true);
-
-        // Mensaje al jugador
-        IFormattableTextComponent playerMsg = TextComponentUtils.concat(
-            createStyled("🎉 ", TextFormatting.GOLD),
-            new StringTextComponent("¡Hola "),
-            createStyled(target.getName().getString(), TextFormatting.AQUA),
-            new StringTextComponent("! Has recibido "),
-            createStyled("Flauta de Raid Legendaria Oscura", TextFormatting.GOLD),
-            new StringTextComponent(" de "),
-            createStyled(speciesName, TextFormatting.RED),
-            new StringTextComponent(". ¡Buena suerte!")
-        );
-        target.sendMessage(playerMsg, target.getUUID());
-
-        return 1;
-    }
-
-    private ItemStack createShadowRaidItem(String species, String form) {
+        // Creamos la Flauta de Raid Oscura
         ItemStack flute = new ItemStack(PixelmonItems.poke_flute.getItem());
-        CompoundNBT nbt = flute.getOrCreateTag();
+        CompoundNBT tag = flute.getOrCreateTag();
 
-        nbt.putBoolean("clovergoshadowwishingpiece", true);
-        nbt.putString("clovergoshadowspecies", species);
-        nbt.putString("clovergoshadowform", form);
+        tag.putBoolean("clovergoshadowwishingpiece", true);
+        tag.putString("clovergoshadowspecies", speciesKey);
+        tag.putString("clovergoshadowform", "shadow");
 
+        // Display name
         CompoundNBT display = new CompoundNBT();
-        // Nombre del item
-        display.putString("Name", serializeComponent(
-            new StringTextComponent("Flauta de Raid Legendaria Oscura")
-                .withStyle(Style.EMPTY.withColor(TextFormatting.RED).withItalic(false))
-        ));
+        display.putString("Name",
+            "{\"text\":\"Flauta de Raid Oscura\",\"color\":\"dark_purple\",\"italic\":false}"
+        );
 
         // Lore
         ListNBT lore = new ListNBT();
-        lore.add(StringNBT.valueOf(serializeComponent(
-            new StringTextComponent("Usa para iniciar una raid legendaria oscura")
-                .withStyle(Style.EMPTY.withColor(TextFormatting.GRAY).withItalic(false))
-        )));
-        lore.add(StringNBT.valueOf(serializeComponent(
-            new StringTextComponent("Pokémon: " + species)
-                .withStyle(Style.EMPTY.withColor(TextFormatting.RED))
-        )));
-        lore.add(StringNBT.valueOf(serializeComponent(
-            new StringTextComponent("Forma: " + form)
-                .withStyle(Style.EMPTY.withColor(TextFormatting.RED))
-        )));
-
+        lore.add(StringNBT.valueOf(
+            "{\"text\":\"Haz click derecho para iniciar una raid\",\"color\":\"gray\",\"italic\":false}"
+        ));
+        lore.add(StringNBT.valueOf(
+            String.format(
+                "{\"text\":\"Especie: %s\",\"color\":\"red\",\"italic\":false}",
+                rawSpecies
+            )
+        ));
         display.put("Lore", lore);
-        nbt.put("display", display);
+        tag.put("display", display);
 
-        return flute;
-    }
-
-    /** Serializa un componente de texto a JSON válido para NBT */
-    private String serializeComponent(ITextComponent component) {
-        return ITextComponent.Serializer.toJson(component);
-    }
-
-    /** Crea un componente de texto con color fijo */
-    private IFormattableTextComponent createStyled(String text, TextFormatting color) {
-        return new StringTextComponent(text).withStyle(Style.EMPTY.withColor(color));
-    }
-
-    /** Utilidad para concatenar varios componentes */
-    private static class TextComponentUtils {
-        static IFormattableTextComponent concat(IFormattableTextComponent... parts) {
-            IFormattableTextComponent result = new StringTextComponent("");
-            for (IFormattableTextComponent p : parts) {
-                result.append(p);
-            }
-            return result;
+        // Entregar al jugador
+        if (!target.inventory.add(flute)) {
+            target.drop(flute, false);
+            IFormattableTextComponent msg = new StringTextComponent("Inventario lleno, se ha soltado la Flauta en el suelo.")
+                .withStyle(TextFormatting.YELLOW);
+            target.sendMessage(msg, target.getUUID());
         }
+
+        // Mensaje de confirmación al emisor
+        IFormattableTextComponent confirm = new StringTextComponent("✔ ")
+            .withStyle(TextFormatting.GREEN)
+            .append(new StringTextComponent(
+                "Se ha dado una Flauta de Raid Oscura de " + rawSpecies +
+                " a " + target.getName().getString()
+            ).withStyle(TextFormatting.AQUA));
+        src.sendSuccess(confirm, false);
+
+        return 1;
     }
 }
