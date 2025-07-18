@@ -127,13 +127,18 @@ public class SpawnShadow {
             : target.getCommandSenderWorld();
         pkm.getOrSpawnPixelmon(lvl, x, y + 1, z);
 
-        // 7) MARCAR spawnTime usando el tickCount global del servidor
+        // ————————————————
+        // 7) Impedir despawn por distancia
+        PixelmonEntity spawned = (PixelmonEntity) pkm.getOrCreatePixelmon();
+        spawned.setPersistenceRequired();
+        // ————————————————
+
+        // 8) MARCAR spawnTime usando el tickCount global del servidor
         MinecraftServer server = src.getServer();
         long tick = server.getTickCount();  // contador global de ticks
-        PixelmonEntity spawned = (PixelmonEntity) pkm.getOrCreatePixelmon();
         spawned.getPersistentData().putLong("clovergoshadow:spawnTime", tick);
 
-        // 8) Mensaje de éxito
+        // 9) Mensaje de éxito
         sendSuccess(src, pkm, x, y, z);
         return 0;
     }

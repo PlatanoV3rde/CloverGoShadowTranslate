@@ -47,20 +47,23 @@ public class SpawnShadowPokemon {
             if (Config.CONFIG.getShadowBlackList().contains(shadow.getSpecies().getName())) return;
             if (Config.CONFIG.getShadowFormBlackList().contains(shadow.getForm().getName())) return;
 
-            // Lo hacemos agresivo y aplicamos el ribbon Shadow
+            // Hacerlo agresivo y aplicar ribbon Shadow
             shadow.getOrCreatePixelmon().setAggression(Aggression.AGGRESSIVE);
             RibbonType ribbon = RibbonHelper.getRibbonTypeIfExists(RibbonEnum.SHADOW_RIBBON.getRibbonId());
             if (ribbon == null) return;
 
-            // Sólo lo enviamos a un jugador
+            // Sólo notificar cuando la causa sea un jugador
             if (!(action.spawnLocation.cause instanceof ServerPlayerEntity)) return;
             ServerPlayerEntity player = (ServerPlayerEntity) action.spawnLocation.cause;
 
             // 1) aplicamos el ribbon
             shadow.addRibbon(ribbon);
 
-            // 2) marcamos el tiempo de spawn en NBT para el ShadowLifetimeHandler
+            // 2) marcamos el entity como persistente para que no despawnee
             PixelmonEntity entity = shadow.getOrCreatePixelmon();
+            entity.setPersistenceRequired();  // <- Aquí evitamos el despawn automático
+
+            // 3) marcamos el tiempo de spawn en NBT para nuestro ShadowLifetimeHandler
             if (entity.level instanceof ServerWorld) {
                 long tick = ((ServerWorld) entity.level).getGameTime();
                 entity.getPersistentData().putLong("clovergoshadow:spawnTime", tick);
@@ -92,7 +95,6 @@ public class SpawnShadowPokemon {
             NPCTrainer trainer = action.getOrCreateEntity();
             trainer.getPersistentData().putBoolean("isshadowtrainer", true);
 
-            // Renombra equipo
             @SuppressWarnings("unchecked")
             ArrayList<Pokemon> team = (ArrayList<Pokemon>) trainer.getPokemonStorage().getTeam();
             team.forEach(pkm ->
